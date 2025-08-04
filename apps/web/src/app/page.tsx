@@ -200,10 +200,12 @@ export default function LandingPage() {
                     {Icon ? (
                       <Icon className="mx-auto mb-4 size-12 text-foreground transition-transform duration-300 group-hover:scale-110" />
                     ) : null}
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    <CardTitle className="text-xl text-center">
+                      {feature.title}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-base">
+                    <CardDescription className="text-base text-center">
                       {feature.description}
                     </CardDescription>
                   </CardContent>
