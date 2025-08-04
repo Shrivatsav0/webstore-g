@@ -16,4 +16,17 @@ export const auth: AuthType = betterAuth({
   },
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
+  advanced: {
+    cookies: {
+      session_token: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+          path: "/",
+        },
+      },
+    },
+    useSecureCookies: true, 
+  },
 });
