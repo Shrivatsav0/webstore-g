@@ -5,13 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,58 +18,23 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import {
-  // If you have categoriesFull, prefer using it.
-  // categoriesFull,
-  categoryItems,
-  Products as allProducts,
-  type Product,
-} from "../../../../../../data/data";
+import { categoriesFull, type Product } from "../../../../../../data/data";
 
 type SortKey = "relevance" | "price-asc" | "price-desc" | "rating-desc";
 
-// Helper: derive category object and products by slug if you don't have categoriesFull
 function getCategoryBySlug(slug: string) {
-  // categoryItems doesn’t include slug in your current file, it uses href.
-  // We infer slug from the href (/categories/<slug>) if present, else from title.
-  const withSlug = categoryItems.map((c) => {
-    const href = c.href || "";
-    const match = href.match(/\/categories\/([^/?#]+)/);
-    const inferred =
-      match?.[1] ||
-      c.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    return { ...c, slug: inferred };
-  });
-  return withSlug.find((c) => c.slug === slug) || null;
+  return categoriesFull.find((c) => c.slug === slug) || null;
 }
 
-function productsForSlug(slug: string): Product[] {
-  // Basic inference by tags based on known slugs
-  // Adjust the mapping as your catalog evolves.
-  const map: Record<string, string[]> = {
-    ranks: ["rank"],
-    "crate-keys": ["crate", "key"],
-    cosmetics: ["cosmetic", "pet", "hat", "effect", "trail", "aura"],
-    boosters: ["booster"],
-    perks: ["perk"],
-    bundles: ["bundle"],
-    pets: ["pet"],
-    titles: ["title"],
-    misc: ["misc"],
-  };
-
-  const wantedTags = map[slug];
-  if (!wantedTags) {
-    // fallback: loose match on slug across tags
-    const loose = slug.replace(/-/g, " ").toLowerCase();
-    return allProducts.filter((p) =>
-      p.tags.some((t) => t.toLowerCase().includes(loose))
-    );
-  }
-
-  return allProducts.filter((p) =>
-    p.tags.some((t) => wantedTags.includes(t.toLowerCase()))
-  );
+// Pull products directly from the category (supports both products and sections)
+function getProductsFromCategory(category: {
+  products?: Product[];
+  sections?: { products: Product[] }[];
+}): Product[] {
+  if (category.products?.length) return category.products;
+  if (category.sections?.length)
+    return category.sections.flatMap((s) => s.products);
+  return [];
 }
 
 export default function CategoryPage() {
@@ -88,18 +47,23 @@ export default function CategoryPage() {
   );
 
   const baseProducts = React.useMemo(
-    () => (slug ? productsForSlug(slug) : []),
-    [slug]
+    () => (category ? getProductsFromCategory(category) : []),
+    [category]
   );
 
   const [query, setQuery] = React.useState("");
   const [sort, setSort] = React.useState<SortKey>("relevance");
   const [onlyInStock, setOnlyInStock] = React.useState(false);
-  const [priceRange, setPriceRange] = React.useState<[number, number]>([0, 25000]);
+  const [priceRange, setPriceRange] = React.useState<[number, number]>([
+    0, 25000,
+  ]);
 
   React.useEffect(() => {
     if (!baseProducts.length) {
       setPriceRange([0, 25000]);
+      setOnlyInStock(false);
+      setQuery("");
+      setSort("relevance");
       return;
     }
     const prices = baseProducts.map((p) => p.price);
@@ -107,7 +71,7 @@ export default function CategoryPage() {
     setOnlyInStock(false);
     setQuery("");
     setSort("relevance");
-  }, [slug]); // reset on slug change
+  }, [slug, baseProducts.length]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -125,16 +89,16 @@ export default function CategoryPage() {
 
     switch (sort) {
       case "price-asc":
-        res = res.sort((a, b) => a.price - b.price);
+        res = res.slice().sort((a, b) => a.price - b.price);
         break;
       case "price-desc":
-        res = res.sort((a, b) => b.price - a.price);
+        res = res.slice().sort((a, b) => b.price - a.price);
         break;
       case "rating-desc":
-        res = res.sort((a, b) => b.rating - a.rating);
+        res = res.slice().sort((a, b) => b.rating - a.rating);
         break;
       default:
-        res = res.sort((a, b) => {
+        res = res.slice().sort((a, b) => {
           const aq =
             Number(a.name.toLowerCase().includes(q)) +
             Number(a.description.toLowerCase().includes(q));
@@ -148,7 +112,6 @@ export default function CategoryPage() {
     return res;
   }, [baseProducts, query, sort, onlyInStock, priceRange]);
 
-  // Loading/empty states to avoid sync access errors
   if (!slug) {
     return (
       <main className="min-h-screen bg-background text-foreground">
@@ -313,18 +276,30 @@ export default function CategoryPage() {
         </div>
 
         {/* Grid */}
-        <CategoryGrid products={filtered} />
+        <CategoryGrid products={filtered} slug={slug} />
       </section>
     </main>
   );
 }
 
-function CategoryGrid({ products }: { products: Product[] }) {
+function CategoryGrid({
+  products,
+  slug,
+}: {
+  products: Product[];
+  slug: string;
+}) {
   return (
     <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {products.map((p, idx) => (
         <li key={p.id}>
           <Card className="group relative h-[380px] overflow-hidden border-border/60 bg-card/70 transition-all duration-300 hover:shadow-lg">
+            <Link
+              href={`/categories/${slug}/${p.slug ?? p.id}`}
+              aria-label={`View ${p.name}`}
+              className="absolute inset-0 z-[1]"
+            />
+
             <div className="absolute inset-0">
               <Image
                 src={p.image || "/placeholder.svg"}
@@ -377,11 +352,17 @@ function CategoryGrid({ products }: { products: Product[] }) {
                       {p.rating.toFixed(1)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button asChild size="sm" variant="secondary">
-                      <Link href={`/products/${p.slug ?? p.id}`}>View</Link>
-                    </Button>
-                    <Button size="sm" disabled={!p.inStock}>
+
+                  <div className="relative z-20 flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      disabled={!p.inStock}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // TODO: add to cart logic
+                      }}
+                    >
                       Add to cart
                     </Button>
                   </div>

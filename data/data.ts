@@ -34,6 +34,14 @@ export type Product = {
   inStock: boolean;
   slug?: string;
   discountPercent?: number; // optional: for badges
+  gallery?: string[]; // additional images
+  features?: string[]; // short bullet highlights
+  details?: { label: string; value: string }[]; // key-value specs
+  delivery?: string; // product-specific delivery note
+  requirements?: string[]; // prerequisites
+  whatsIncluded?: string[]; // explicit inclusions
+  disclaimer?: string; // small print
+  inventoryNote?: string; // stock/status or upgrade note
 };
 
 export type CategoryItem = {
@@ -424,6 +432,22 @@ export const categoriesFull: CategoryFull[] = [
         rating: 4.8,
         inStock: true,
         discountPercent: 10,
+        gallery: [
+          "/placeholder.svg?height=480&width=720&text=VIP",
+          "/placeholder.svg?height=320&width=480&text=VIP+Kits",
+        ],
+        features: ["Colored chat", "VIP prefix", "Basic VIP kit", "2 homes"],
+        details: [
+          { label: "Type", value: "Rank (permanent)" },
+          { label: "Compatibility", value: "All survival servers" },
+          { label: "Upgrade path", value: "VIP+ → MVP" },
+        ],
+        delivery: "Granted instantly after purchase. Relog if not visible.",
+        requirements: ["Valid Minecraft username"],
+        whatsIncluded: ["VIP permissions", "Prefix", "VIP kit"],
+        disclaimer:
+          "Perks are cosmetic/quality-of-life oriented. Balance may change over seasons.",
+        inventoryNote: "Upgrades pro-rate at checkout",
       },
       {
         id: "rank-vip-plus",
@@ -436,6 +460,17 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["rank", "vip+", "perks"],
         rating: 4.9,
         inStock: true,
+        gallery: [
+          "/placeholder.svg?height=480&width=720&text=VIP%2B",
+          "/placeholder.svg?height=320&width=480&text=Priority+Queue",
+        ],
+        features: ["Priority queue", "Larger kits", "4 homes"],
+        details: [
+          { label: "Type", value: "Rank (permanent)" },
+          { label: "Upgrade path", value: "MVP" },
+        ],
+        delivery: "Instant delivery on purchase.",
+        whatsIncluded: ["VIP+ permissions", "Prefix", "Expanded kits"],
       },
       {
         id: "rank-mvp",
@@ -448,6 +483,17 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["rank", "mvp"],
         rating: 4.7,
         inStock: true,
+        features: ["Exclusive cosmetics access", "6 homes", "Bigger kits"],
+        details: [
+          { label: "Type", value: "Rank (permanent)" },
+          { label: "Best for", value: "Players active across seasons" },
+        ],
+        delivery: "Instant. Relog to refresh permissions.",
+        whatsIncluded: [
+          "MVP permissions",
+          "Prefix",
+          "Exclusive cosmetics access",
+        ],
       },
     ],
   },
@@ -475,18 +521,13 @@ export const categoriesFull: CategoryFull[] = [
             tags: ["cosmetic", "hat"],
             rating: 4.6,
             inStock: true,
-          },
-          {
-            id: "hat-crown",
-            slug: "gold-crown",
-            name: "Gold Crown",
-            description: "Rule the lobby with a sparkling crown.",
-            price: 599,
-            image: "/placeholder.svg?height=480&width=720&text=Crown",
-            tags: ["cosmetic", "hat"],
-            rating: 4.9,
-            inStock: true,
-            discountPercent: 5,
+            features: ["Cosmetic only", "Lobby compatible", "Toggle anytime"],
+            details: [
+              { label: "Slot", value: "Hat" },
+              { label: "Rarity", value: "Rare" },
+            ],
+            whatsIncluded: ["Top Hat cosmetic"],
+            disclaimer: "No gameplay advantage.",
           },
         ],
       },
@@ -505,6 +546,17 @@ export const categoriesFull: CategoryFull[] = [
             tags: ["cosmetic", "effect", "trail"],
             rating: 4.7,
             inStock: true,
+            features: [
+              "Cosmetic only",
+              "Toggle with /effects",
+              "Low performance impact",
+            ],
+            details: [
+              { label: "Type", value: "Particle trail" },
+              { label: "Color", value: "Warm orange" },
+            ],
+            whatsIncluded: ["Ember Trail cosmetic"],
+            disclaimer: "No gameplay advantage.",
           },
           {
             id: "effect-ice-aura",
@@ -515,35 +567,6 @@ export const categoriesFull: CategoryFull[] = [
             image: "/placeholder.svg?height=480&width=720&text=Ice%20Aura",
             tags: ["cosmetic", "effect", "aura"],
             rating: 4.5,
-            inStock: true,
-          },
-        ],
-      },
-      {
-        id: "sec-pets",
-        title: "Pets",
-        description: "Friendly companions to follow you in the world.",
-        products: [
-          {
-            id: "pet-wolf",
-            slug: "pet-wolf",
-            name: "Pet Wolf",
-            description: "A loyal wolf companion. Cosmetic only.",
-            price: 299,
-            image: "/placeholder.svg?height=480&width=720&text=Pet%20Wolf",
-            tags: ["cosmetic", "pet"],
-            rating: 4.8,
-            inStock: true,
-          },
-          {
-            id: "pet-axolotl",
-            slug: "pet-axolotl",
-            name: "Pet Axolotl",
-            description: "Adorable aquatic friend to brighten your day.",
-            price: 399,
-            image: "/placeholder.svg?height=480&width=720&text=Pet%20Axolotl",
-            tags: ["cosmetic", "pet"],
-            rating: 4.9,
             inStock: true,
           },
         ],
@@ -570,6 +593,19 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["crate", "key", "loot"],
         rating: 4.7,
         inStock: true,
+        gallery: [
+          "/placeholder.svg?height=480&width=720&text=Legendary%20Key",
+          "/placeholder.svg?height=320&width=480&text=Crate+Room",
+        ],
+        features: ["Top-tier rewards", "Instant delivery", "Tradeable in-game"],
+        details: [
+          { label: "Crate", value: "Legendary" },
+          { label: "Tier", value: "S" },
+          { label: "Use at", value: "/warp crates" },
+        ],
+        delivery: "Key is added to your account instantly.",
+        whatsIncluded: ["1x Legendary Crate Key"],
+        disclaimer: "Rewards are randomized. No specific item is guaranteed.",
       },
       {
         id: "key-epic-bundle",
@@ -582,6 +618,14 @@ export const categoriesFull: CategoryFull[] = [
         rating: 4.6,
         inStock: true,
         discountPercent: 10,
+        features: ["Bundle value", "Instant delivery"],
+        details: [
+          { label: "Includes", value: "5x Epic Crate Keys" },
+          { label: "Use at", value: "/warp crates" },
+        ],
+        delivery: "Keys are added to your account instantly.",
+        whatsIncluded: ["5x Epic Crate Keys"],
+        disclaimer: "Rewards are randomized per key.",
       },
       {
         id: "key-rare",
@@ -593,6 +637,14 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["crate", "key"],
         rating: 4.5,
         inStock: true,
+        features: ["Good value", "Instant delivery"],
+        details: [
+          { label: "Crate", value: "Rare" },
+          { label: "Tier", value: "B" },
+        ],
+        delivery: "Key is added instantly.",
+        whatsIncluded: ["1x Rare Crate Key"],
+        disclaimer: "Rewards are randomized.",
       },
     ],
   },
@@ -613,6 +665,13 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["booster", "xp"],
         rating: 4.4,
         inStock: true,
+        features: ["2h duration", "Server-wide effect", "Stacks with events"],
+        details: [
+          { label: "Multiplier", value: "2x XP" },
+          { label: "Duration", value: "2 hours" },
+        ],
+        delivery: "Activated instantly after purchase or scheduling.",
+        disclaimer: "Booster times may be adjusted during maintenance windows.",
       },
       {
         id: "booster-drops-24h",
@@ -625,6 +684,12 @@ export const categoriesFull: CategoryFull[] = [
         rating: 4.6,
         inStock: true,
         discountPercent: 15,
+        features: ["24h duration", "Server-wide effect"],
+        details: [
+          { label: "Effect", value: "Increased drop rates" },
+          { label: "Duration", value: "24 hours" },
+        ],
+        delivery: "Activated instantly after purchase or scheduling.",
       },
       {
         id: "booster-money-12h",
@@ -636,6 +701,12 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["booster", "money"],
         rating: 4.3,
         inStock: true,
+        features: ["12h duration", "Server-wide effect"],
+        details: [
+          { label: "Effect", value: "Increased earnings" },
+          { label: "Duration", value: "12 hours" },
+        ],
+        delivery: "Activated instantly after purchase or scheduling.",
       },
     ],
   },
@@ -657,6 +728,13 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["perk", "fly"],
         rating: 4.6,
         inStock: true,
+        features: ["Timed 30 days", "Server-wide", "Great for builders"],
+        details: [
+          { label: "Command", value: "/fly" },
+          { label: "Duration", value: "30 days" },
+        ],
+        delivery: "Granted instantly after purchase. Relog if not visible.",
+        whatsIncluded: ["Fly permission (time-limited)"],
       },
       {
         id: "perk-nick",
@@ -668,6 +746,13 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["perk", "nickname"],
         rating: 4.4,
         inStock: true,
+        features: ["Change display name", "Moderation-safe filters"],
+        details: [
+          { label: "Command", value: "/nick" },
+          { label: "Limits", value: "Subject to community guidelines" },
+        ],
+        delivery: "Instant.",
+        disclaimer: "Inappropriate nicknames may be reverted by moderation.",
       },
     ],
   },
@@ -689,6 +774,10 @@ export const categoriesFull: CategoryFull[] = [
         rating: 4.8,
         inStock: true,
         discountPercent: 15,
+        features: ["Best value", "Instant delivery"],
+        details: [{ label: "Includes", value: "VIP rank + 3x Rare Keys" }],
+        whatsIncluded: ["VIP rank", "3x Rare Keys"],
+        delivery: "Items are applied instantly post-purchase.",
       },
       {
         id: "bundle-cosmetic",
@@ -700,6 +789,10 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["bundle", "cosmetic"],
         rating: 4.7,
         inStock: true,
+        features: ["Cosmetic-focused", "Bundle savings"],
+        details: [{ label: "Includes", value: "Hat + Effect + Pet" }],
+        whatsIncluded: ["1x Hat", "1x Effect", "1x Pet"],
+        delivery: "Applied instantly to your account.",
       },
     ],
   },
@@ -721,6 +814,12 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["cosmetic", "pet"],
         rating: 4.8,
         inStock: true,
+        features: ["Cosmetic only", "Follows you around", "Toggle anytime"],
+        details: [
+          { label: "Behavior", value: "Friendly companion" },
+          { label: "Summon", value: "/pet" },
+        ],
+        whatsIncluded: ["Wolf cosmetic pet"],
       },
       {
         id: "pet-cat",
@@ -732,6 +831,12 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["cosmetic", "pet"],
         rating: 4.9,
         inStock: true,
+        features: ["Cosmetic only", "Follows you around", "Toggle anytime"],
+        details: [
+          { label: "Behavior", value: "Friendly companion" },
+          { label: "Summon", value: "/pet" },
+        ],
+        whatsIncluded: ["Cat cosmetic pet"],
       },
     ],
   },
@@ -752,6 +857,9 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["title", "chat"],
         rating: 4.6,
         inStock: true,
+        features: ["Chat flair", "Instant apply"],
+        details: [{ label: "Type", value: "Chat title" }],
+        delivery: "Granted instantly.",
       },
       {
         id: "title-royal",
@@ -763,6 +871,9 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["title", "chat"],
         rating: 4.7,
         inStock: true,
+        features: ["Chat flair", "Instant apply"],
+        details: [{ label: "Type", value: "Chat title" }],
+        delivery: "Granted instantly.",
       },
     ],
   },
@@ -783,6 +894,9 @@ export const categoriesFull: CategoryFull[] = [
         tags: ["misc", "fun"],
         rating: 4.3,
         inStock: true,
+        features: ["Visual celebration", "Party-ready"],
+        details: [{ label: "Type", value: "Cosmetic consumable" }],
+        delivery: "Granted instantly.",
       },
     ],
   },
