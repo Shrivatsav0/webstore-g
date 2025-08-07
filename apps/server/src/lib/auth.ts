@@ -5,8 +5,11 @@ import { db } from "../db";
 import * as schema from "../db/schema/auth";
 import { ac, padmin, puser } from "./auth/permissions";
 
+// Get the return type of the betterAuth function call.
+// This is the most robust way to get the exact type.
+type BetterAuthInstance = ReturnType<typeof betterAuth>;
 
-export const auth = betterAuth({
+export const auth: BetterAuthInstance = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: schema,
@@ -40,7 +43,6 @@ export const auth = betterAuth({
       defaultBanExpiresIn: undefined,
       bannedUserMessage:
         "You have been banned from this application. Please contact support if you believe this is an error.",
-
       ac,
       roles: {
         padmin,

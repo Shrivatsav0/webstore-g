@@ -1,7 +1,5 @@
-import { admin } from "better-auth/plugins/admin";
 import { ORPCError, os } from "@orpc/server";
 import type { Context } from "./context";
-import { auth } from "./auth";
 
 export const o = os.$context<Context>();
 
@@ -22,7 +20,10 @@ export const protectedProcedure = publicProcedure.use(requireAuth);
 
 export const adminProcedure = protectedProcedure.use(
   async ({ context, next }) => {
-    const roles = context.session?.user?.role?.split(",") ?? [];
+    const user = context.session?.user as
+      | ({ role: string } & typeof context.session.user)
+      | undefined;
+    const roles = user?.role?.split(",") ?? [];
     if (!roles.includes("admin")) {
       throw new Error("Not authorized");
     }
