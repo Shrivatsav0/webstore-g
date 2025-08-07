@@ -5,7 +5,11 @@ import { orpc } from "@/utils/orpc"; // adjust path
 import type { User } from "better-auth";
 
 export default function UsersPage() {
-  const users = useQuery(orpc.users.queryOptions());
+  const users = useQuery({
+    ...orpc.adminUsers.queryOptions(),
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+  });
 
   if (users.isLoading) return <div>Loading...</div>;
   if (users.error) return <div>Error: {(users.error as Error).message}</div>;

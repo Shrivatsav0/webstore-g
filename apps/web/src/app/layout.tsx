@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Nunito_Sans } from "next/font/google";
 import "../index.css";
 import Providers from "@/components/providers";
-import {Header} from "@/components/header";
+import { Header } from "@/components/header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +19,6 @@ const nunito_sans = Nunito_Sans({
   subsets: ["latin"],
   display: "swap",
 });
-
 
 export const metadata: Metadata = {
   title: "my-better-t-app",
@@ -38,7 +37,7 @@ export default function RootLayout({
       >
         <Providers>
           <div className="grid grid-rows-[auto_1fr] h-svh">
-            <Header />
+          
             {children}
           </div>
         </Providers>

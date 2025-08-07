@@ -29,7 +29,7 @@
     "./.next/types/**/*.ts",
     "./next-env.d.ts",
     ".next/types/**/*.ts"
-  ],
+, "../server/src/db/schema/billing.ts"  ],
   "exclude": ["./node_modules"],
   "references": [
     {

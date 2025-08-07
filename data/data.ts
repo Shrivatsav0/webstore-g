@@ -908,7 +908,6 @@ export const categoriesFull: CategoryFull[] = [
 
 export const links = [
   { to: "/categories", label: "Categories", icon: Store },
-  { to: "/dashboard", label: "Dashboard", icon: Crown },
   { to: "/support", label: "Support", icon: LifeBuoy },
 ];
 

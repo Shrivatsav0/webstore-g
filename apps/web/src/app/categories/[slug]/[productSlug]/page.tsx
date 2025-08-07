@@ -22,6 +22,7 @@ import {
   Products,
   type Product,
 } from "../../../../../../../data/data";
+import { Header } from "@/components/header";
 
 type CategoryResolved = {
   id: string;
@@ -211,208 +212,211 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      {/* Hero */}
-      <section className="relative h-[300px] overflow-hidden md:h-[380px]">
-        <Image
-          src={product.image || "/placeholder.svg"}
-          alt={product.name}
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background/90" />
-        <div className="container relative z-10 mx-auto flex h-full items-end px-4 py-8">
-          <div className="w-full rounded-lg border border-border/60 bg-background/60 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/40">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Link
-                  href="/categories"
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Categories
-                </Link>
-                <span className="text-muted-foreground">/</span>
-                <Link
-                  href={`/categories/${category.slug}`}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  {category.title}
-                </Link>
-                <span className="text-muted-foreground">/</span>
-                <span className="text-foreground">{product.name}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {category.badge ? (
-                  <Badge className="bg-secondary/60 text-secondary-foreground">
-                    {category.badge}
-                  </Badge>
-                ) : null}
-                {product.discountPercent ? (
-                  <Badge className="bg-emerald-500/80 text-emerald-50">
-                    -{product.discountPercent}%
-                  </Badge>
-                ) : null}
-                {!product.inStock && (
-                  <Badge className="bg-muted text-muted-foreground">
-                    Out of stock
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <h1 className="text-2xl font-semibold md:text-3xl">
-              {product.name}
-            </h1>
-            <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-              {product.description}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Content */}
-      <section className="container mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Left: Image and metadata (card) */}
-          <div className="flex flex-col gap-4 sm:gap-6">
-            {/* Image-only card */}
-            <Card className="group relative overflow-hidden rounded-2xl border-border/60 bg-card/70 py-0">
-              <div className="relative aspect-video w-full">
-                <Image
-                  src={product.image || "/placeholder.svg"}
-                  alt={product.name}
-                  fill
-                  className="rounded-2xl object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-background/10 to-transparent" />
-                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-border/60" />
-              </div>
-            </Card>
-
-            {/* Details card below image */}
-            <Card className="rounded-2xl border-border/60 bg-card/70 mt-3 py-5" >
-              <CardContent className="flex flex-col justify-end gap-4 p-4 sm:p-6">
-                <div className="flex items-start justify-between">
-                  <div className="max-w-[70%]">
-                    <h3 className="line-clamp-2 text-base font-medium text-foreground/90 sm:text-lg">
-                      {product.name}
-                    </h3>
-                  </div>
-                  <div className="shrink-0 text-2xl font-bold tracking-tight sm:text-3xl">
-                    {formatCents(product.price)}
-                  </div>
+    <>
+      <Header />
+      <main className="min-h-screen bg-background text-foreground">
+        {/* Hero */}
+        <section className="relative h-[300px] overflow-hidden md:h-[380px]">
+          <Image
+            src={product.image || "/placeholder.svg"}
+            alt={product.name}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background/90" />
+          <div className="container relative z-10 mx-auto flex h-full items-end px-4 py-8">
+            <div className="w-full rounded-lg border border-border/60 bg-background/60 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/40">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <Link
+                    href="/categories"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Categories
+                  </Link>
+                  <span className="text-muted-foreground">/</span>
+                  <Link
+                    href={`/categories/${category.slug}`}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    {category.title}
+                  </Link>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="text-foreground">{product.name}</span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-foreground/80">Rating</span>
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={product.rating} />
-                    <span className="text-xs text-foreground/80">
-                      {product.rating.toFixed(1)}
+                <div className="flex items-center gap-2">
+                  {category.badge ? (
+                    <Badge className="bg-secondary/60 text-secondary-foreground">
+                      {category.badge}
+                    </Badge>
+                  ) : null}
+                  {product.discountPercent ? (
+                    <Badge className="bg-emerald-500/80 text-emerald-50">
+                      -{product.discountPercent}%
+                    </Badge>
+                  ) : null}
+                  {!product.inStock && (
+                    <Badge className="bg-muted text-muted-foreground">
+                      Out of stock
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <h1 className="text-2xl font-semibold md:text-3xl">
+                {product.name}
+              </h1>
+              <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
+                {product.description}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Content */}
+        <section className="container mx-auto px-4 py-10">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Left: Image and metadata (card) */}
+            <div className="flex flex-col gap-4 sm:gap-6">
+              {/* Image-only card */}
+              <Card className="group relative overflow-hidden rounded-2xl border-border/60 bg-card/70 py-0">
+                <div className="relative aspect-video w-full">
+                  <Image
+                    src={product.image || "/placeholder.svg"}
+                    alt={product.name}
+                    fill
+                    className="rounded-2xl object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-background/10 to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-border/60" />
+                </div>
+              </Card>
+
+              {/* Details card below image */}
+              <Card className="rounded-2xl border-border/60 bg-card/70 mt-3 py-5">
+                <CardContent className="flex flex-col justify-end gap-4 p-4 sm:p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="max-w-[70%]">
+                      <h3 className="line-clamp-2 text-base font-medium text-foreground/90 sm:text-lg">
+                        {product.name}
+                      </h3>
+                    </div>
+                    <div className="shrink-0 text-2xl font-bold tracking-tight sm:text-3xl">
+                      {formatCents(product.price)}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-foreground/80">Rating</span>
+                    <div className="flex items-center gap-2">
+                      <StarRating rating={product.rating} />
+                      <span className="text-xs text-foreground/80">
+                        {product.rating.toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-foreground/80">
+                      Availability
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs",
+                        product.inStock
+                          ? "text-emerald-400"
+                          : "text-foreground/70"
+                      )}
+                    >
+                      {product.inStock ? "In stock" : "Out of stock"}
                     </span>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-foreground/80">
-                    Availability
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xs",
-                      product.inStock
-                        ? "text-emerald-400"
-                        : "text-foreground/70"
-                    )}
+                  {product.tags?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {product.tags.map((t) => (
+                        <Badge
+                          key={t}
+                          variant="secondary"
+                          className="bg-secondary/60 text-secondary-foreground/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
+                        >
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
+                </CardContent>
+
+                <CardFooter className="flex items-center justify-between gap-3 p-4 sm:p-6">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="bg-secondary/80 text-secondary-foreground backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
                   >
-                    {product.inStock ? "In stock" : "Out of stock"}
-                  </span>
-                </div>
+                    <Link href={`/categories/${category.slug}`}>
+                      Back to {category.title}
+                    </Link>
+                  </Button>
+                  <Button
+                    disabled={!product.inStock}
+                    className="bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
+                  >
+                    Add to cart
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
 
-                {product.tags?.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {product.tags.map((t) => (
-                      <Badge
-                        key={t}
-                        variant="secondary"
-                        className="bg-secondary/60 text-secondary-foreground/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
-                      >
-                        {t}
-                      </Badge>
-                    ))}
+            {/* Right: Description and details */}
+            <div className="lg:col-span-2">
+              <Card className="border-border/60 bg-card/70">
+                <CardHeader>
+                  <CardTitle>About this item</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    {product.description}
+                  </p>
+                  <Separator />
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <h3 className="mb-2 text-sm font-medium">Key details</h3>
+                      <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                        <li>Category: {category.title}</li>
+                        <li>Delivery: Instant for most items after purchase</li>
+                        <li>Refunds: See refund policy for eligibility</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="mb-2 text-sm font-medium">Tips</h3>
+                      <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                        <li>Ensure your Minecraft username is correct</li>
+                        <li>
+                          Relog if delivery doesn’t arrive within a few minutes
+                        </li>
+                        <li>Contact support with your order ID if needed</li>
+                      </ul>
+                    </div>
                   </div>
-                ) : null}
-              </CardContent>
+                </CardContent>
+              </Card>
 
-              <CardFooter className="flex items-center justify-between gap-3 p-4 sm:p-6">
-                <Button
-                  asChild
-                  variant="secondary"
-                  className="bg-secondary/80 text-secondary-foreground backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
-                >
-                  <Link href={`/categories/${category.slug}`}>
-                    Back to {category.title}
-                  </Link>
-                </Button>
-                <Button
-                  disabled={!product.inStock}
-                  className="bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
-                >
-                  Add to cart
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-
-          {/* Right: Description and details */}
-          <div className="lg:col-span-2">
-            <Card className="border-border/60 bg-card/70">
-              <CardHeader>
-                <CardTitle>About this item</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  {product.description}
-                </p>
-                <Separator />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <h3 className="mb-2 text-sm font-medium">Key details</h3>
-                    <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                      <li>Category: {category.title}</li>
-                      <li>Delivery: Instant for most items after purchase</li>
-                      <li>Refunds: See refund policy for eligibility</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-medium">Tips</h3>
-                    <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                      <li>Ensure your Minecraft username is correct</li>
-                      <li>
-                        Relog if delivery doesn’t arrive within a few minutes
-                      </li>
-                      <li>Contact support with your order ID if needed</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Optional: Related items from the same category */}
-            <div className="mt-6">
-              <RelatedFromCategory
-                category={category}
-                currentId={product.id}
-                currentSlug={product.slug || product.id}
-              />
+              {/* Optional: Related items from the same category */}
+              <div className="mt-6">
+                <RelatedFromCategory
+                  category={category}
+                  currentId={product.id}
+                  currentSlug={product.slug || product.id}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }
 

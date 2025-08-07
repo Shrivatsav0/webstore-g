@@ -1,5 +1,9 @@
 import { db } from "../db";
-import { protectedProcedure, publicProcedure } from "../lib/orpc";
+import {
+  protectedProcedure,
+  publicProcedure,
+  adminProcedure,
+} from "../lib/orpc";
 import { user } from "../db/schema/auth";
 
 export const appRouter = {
@@ -13,6 +17,9 @@ export const appRouter = {
     };
   }),
   users: publicProcedure.handler(async () => {
+    return db.select().from(user);
+  }),
+  adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),
 };

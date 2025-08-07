@@ -1,67 +1,82 @@
-# test
+# mc-webstore
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Next, ORPC, and more.
+Monorepo for mc-webstore: a modern, type-safe web store built with Next.js apps for Web, Server APIs, and Fumadocs documentation. Product/category data for the demo is served from data/data.ts.
 
-## Features
+## Tech Stack
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **shadcn/ui** - Reusable UI components
-- **Next.js** - Full-stack React framework
-- **oRPC** - End-to-end type-safe APIs with OpenAPI integration
-- **Bun** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Authentication** - Email & password authentication with Better Auth
-- **Turborepo** - Optimized monorepo build system
+- Monorepo: Turborepo, Bun
+- Frontend (apps/web): Next.js (App Router), React, TypeScript, TailwindCSS, shadcn/ui
+- Docs (apps/fumadocs): Next.js + Fumadocs (MDX)
+- Backend (apps/server): Next.js (route handlers), oRPC, Better Auth, Drizzle ORM, PostgreSQL
+- DB/ORM: Drizzle + Postgres
+- Auth: Better Auth (email/password)
+- Icons/UI: lucide-react, shadcn/ui
 
-## Getting Started
+## Workspace Structure
 
-First, install the dependencies:
+```
+.
+├─ apps/
+│  ├─ web/        # Web UI (Next.js)
+│  ├─ server/     # API & auth (Next.js, oRPC)
+│  └─ fumadocs/   # Documentation site (Fumadocs)
+├─ data/
+│  └─ data.ts     # Demo product/category data used by web
+└─ package.json   # Turbo/Bun scripts
+```
+
+## Prerequisites
+
+- Node/Bun: Bun 1.2+
+- PostgreSQL (if using the server app)
+
+## Setup
 
 ```bash
 bun install
 ```
-## Database Setup
 
-This project uses PostgreSQL with Drizzle ORM.
+If running the server app with Postgres + Drizzle, copy env and push schema:
 
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/server/.env` file with your PostgreSQL connection details.
-
-3. Apply the schema to your database:
 ```bash
+cp apps/server/.env.example apps/server/.env
 bun db:push
 ```
 
+## Development
 
-Then, run the development server:
-
+- Start all apps:
 ```bash
 bun dev
 ```
-
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-The API is running at [http://localhost:3000](http://localhost:3000).
-
-
-
-## Project Structure
-
+- Start only web:
+```bash
+bun dev:web
 ```
-test/
-├── apps/
-│   ├── web/         # Frontend application (Next.js)
-│   └── server/      # Backend API (Next, ORPC)
+- Start only server:
+```bash
+bun dev:server
 ```
 
-## Available Scripts
+Web: http://localhost:3001
+API: http://localhost:3000
 
-- `bun dev`: Start all applications in development mode
-- `bun build`: Build all applications
-- `bun dev:web`: Start only the web application
-- `bun dev:server`: Start only the server
-- `bun check-types`: Check TypeScript types across all apps
-- `bun db:push`: Push schema changes to database
-- `bun db:studio`: Open database studio UI
+## Data Source
+
+The storefront reads demo data from data/data.ts. Replace with real APIs or database as needed.
+
+## Scripts
+
+- dev: turbo dev
+- build: turbo build
+- check-types: turbo check-types
+- db:push | db:studio | db:generate | db:migrate (scoped to apps/server)
+
+## Fumadocs
+
+Docs live in apps/fumadocs. Add MDX under apps/fumadocs/content/docs. Start docs with the root dev command; Fumadocs will be served by its Next.js app.
+
+## Contributing
+
+- Use TypeScript
+- Follow existing patterns and do not commit secrets

@@ -1,11 +1,12 @@
 import { betterAuth } from "better-auth";
+import { admin } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db";
 import * as schema from "../db/schema/auth";
+import { ac, padmin, puser } from "./auth/permissions";
 
-type AuthType = ReturnType<typeof betterAuth>;
 
-export const auth: AuthType = betterAuth({
+export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: schema,
@@ -27,6 +28,24 @@ export const auth: AuthType = betterAuth({
         },
       },
     },
-    useSecureCookies: true, 
+    useSecureCookies: true,
   },
+  plugins: [
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"],
+      adminUserIds: [],
+      impersonationSessionDuration: 60 * 60,
+      defaultBanReason: "No reason",
+      defaultBanExpiresIn: undefined,
+      bannedUserMessage:
+        "You have been banned from this application. Please contact support if you believe this is an error.",
+
+      ac,
+      roles: {
+        padmin,
+        puser,
+      },
+    }),
+  ],
 });
