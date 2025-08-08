@@ -1,8 +1,8 @@
 import { db } from "../db";
 import { protectedProcedure, publicProcedure } from "../lib/orpc";
 import { user } from "../db/schema/auth";
-import { checkAdminStatus } from "@/lib/adminProcedures/adminCheck";
-import { adminProcedure } from "@/lib/adminProcedures/adminCRUD";
+import { checkAdminStatus } from "../lib/adminProcedures/adminCheck";
+import { adminProcedure } from "../lib/adminProcedures/adminCRUD";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
