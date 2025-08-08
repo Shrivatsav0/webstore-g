@@ -18,6 +18,8 @@
     "db:migrate": "turbo -F server db:migrate"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.34.1",
+    "icons-react": "^3.7.1",
     "lucide-react": "^0.536.0"
   },
   "devDependencies": {

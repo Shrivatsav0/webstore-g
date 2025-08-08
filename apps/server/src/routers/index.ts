@@ -1,10 +1,8 @@
 import { db } from "../db";
-import {
-  protectedProcedure,
-  publicProcedure,
-  adminProcedure,
-} from "../lib/orpc";
+import { protectedProcedure, publicProcedure } from "../lib/orpc";
 import { user } from "../db/schema/auth";
+import { checkAdminStatus } from "@/lib/adminProcedures/adminCheck";
+import { adminProcedure } from "@/lib/adminProcedures/adminCRUD";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -19,6 +17,7 @@ export const appRouter = {
   users: publicProcedure.handler(async () => {
     return db.select().from(user);
   }),
+  checkAdminStatus,
   adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),

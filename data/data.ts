@@ -86,6 +86,14 @@ export type Category = {
     products: Product[];
   }[];
 };
+export type CategoryWithCTA = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  badge?: string;
+  cta?: { label: string; href: string };
+};
 
 /* =========================
      Site / Marketing Data
@@ -145,6 +153,7 @@ export const features = [
 
 export const categories = [
   {
+    id: "cat-ranks",
     title: "Ranks",
     description: "Unlock special abilities and commands",
     image: "/placeholder.svg?height=480&width=720&text=Ranks",
@@ -152,6 +161,7 @@ export const categories = [
     cta: { label: "Explore", href: "/ranks" },
   },
   {
+    id: "cat-keys",
     title: "Crate Keys",
     description: "Open crates for random rewards",
     image: "/placeholder.svg?height=480&width=720&text=Crate%20Keys",
@@ -159,6 +169,7 @@ export const categories = [
     cta: { label: "Open Now", href: "/shop?category=keys" },
   },
   {
+    id: "cat-cosmetics",
     title: "Cosmetics",
     description: "Show off with pets, trails, and more",
     image: "/placeholder.svg?height=480&width=720&text=Cosmetics",

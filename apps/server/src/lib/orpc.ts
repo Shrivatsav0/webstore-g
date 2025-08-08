@@ -1,5 +1,6 @@
 import { ORPCError, os } from "@orpc/server";
 import type { Context } from "./context";
+import z from "zod";
 
 export const o = os.$context<Context>();
 
@@ -18,15 +19,3 @@ const requireAuth = o.middleware(async ({ context, next }) => {
 
 export const protectedProcedure = publicProcedure.use(requireAuth);
 
-export const adminProcedure = protectedProcedure.use(
-  async ({ context, next }) => {
-    const user = context.session?.user as
-      | ({ role: string } & typeof context.session.user)
-      | undefined;
-    const roles = user?.role?.split(",") ?? [];
-    if (!roles.includes("admin")) {
-      throw new Error("Not authorized");
-    }
-    return next();
-  }
-);
