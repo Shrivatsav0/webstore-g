@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
 import {
   Card,
@@ -52,6 +52,12 @@ import {
 } from "../../../../../../data/data";
 import { SiteHeader } from "@/components/sidebar/site-header";
 import { CInput } from "@/components/ui/cinput";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
+import SiteConfigSection from "@/components/dashboard/siteConfig";
+import HeroConfigSection from "@/components/dashboard/heroConfig";
+import { title } from "process";
 
 // Mock analytics data
 const mockAnalytics = {
@@ -108,9 +114,7 @@ const siteConfigSchema = z.object({
 });
 
 const heroSchema = z.object({
-  badge: z.object({
-    text: z.string().min(1, "Badge text required").max(50, "Badge too long"),
-  }),
+  badgeText: z.string().min(1, "Badge text required").max(20, "Badge too long"),
   title: z.string().min(1, "Title required").max(100, "Title too long"),
   subtitle: z
     .string()
@@ -165,17 +169,89 @@ type ValidationError = {
 
 export default function LandingPageDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [siteConfig, setSiteConfig] = useState(initialSite);
-  const [heroData, setHeroData] = useState(initialHero);
   const [features, setFeatures] = useState(initialFeatures);
   const [categories, setCategories] = useState<CategoryWithCTA[]>([]);
   const [newsletter, setNewsletter] = useState(initialNewsletter);
   const [footerData, setFooterData] = useState(initialFooter);
-
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">(
     "idle"
+  );
+
+  /* ---------ORPC PROCEDURES--------- */
+
+  const queryClient = useQueryClient();
+
+  /* SITE CONFIG*/
+  const {
+    data: siteConfigData,
+    isLoading: isConfigLoading,
+    error: configError,
+  } = useQuery(orpc.siteConfig.list.queryOptions());
+
+  // Local state for editing
+  const [siteConfig, setSiteConfig] = useState({
+    name: "",
+    url: "",
+    description: "",
+  });
+
+  // When DB data loads, update local state
+  useEffect(() => {
+    if (siteConfigData && siteConfigData.length > 0) {
+      setSiteConfig({
+        name: siteConfigData[0].name ?? "",
+        url: siteConfigData[0].url ?? "",
+        description: siteConfigData[0].description ?? "",
+      });
+    }
+  }, [siteConfigData]);
+
+  // Upsert mutation for saving
+  const siteConfigMutation = useMutation(
+    orpc.siteConfig.upsert.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.siteConfig.list.queryKey(),
+        });
+      },
+    })
+  );
+
+  /* HERO CONFIG */
+  const {
+    data: heroConfigData,
+    isLoading: isHeroConfigLoading,
+    error: heroConfigError,
+  } = useQuery(orpc.heroConfig.list.queryOptions());
+
+  const [heroConfig, setHeroConfig] = useState({
+    badgeText: "",
+    title: "",
+    subtitle: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    if (heroConfigData && heroConfigData.length > 0) {
+      setHeroConfig({
+        badgeText: heroConfigData[0].badgeText ?? "",
+        title: heroConfigData[0].title ?? "",
+        subtitle: heroConfigData[0].subtitle ?? "",
+        description: heroConfigData[0].description ?? "",
+      });
+    }
+  }, [heroConfigData]);
+
+  const heroConfigMutation = useMutation(
+    orpc.heroConfig.upsert.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.heroConfig.list.queryKey(),
+        });
+      },
+    })
   );
 
   // Calculate completion percentage
@@ -194,10 +270,10 @@ export default function LandingPageDashboard() {
     checkField(siteConfig.description);
 
     // Hero
-    checkField(heroData.badge.text);
-    checkField(heroData.title);
-    checkField(heroData.subtitle);
-    checkField(heroData.description);
+    checkField(heroConfig.badgeText);
+    checkField(heroConfig.title);
+    checkField(heroConfig.subtitle);
+    checkField(heroConfig.description);
 
     // Features
     features.forEach((feature) => {
@@ -220,7 +296,14 @@ export default function LandingPageDashboard() {
     checkField(footerData.description);
 
     return Math.round((completedFields / totalFields) * 100);
-  }, [siteConfig, heroData, features, categories, newsletter, footerData]);
+  }, [
+    siteConfig,
+    heroConfigData,
+    features,
+    categories,
+    newsletter,
+    footerData,
+  ]);
 
   const validateAllData = (): ValidationError[] => {
     const validationErrors: ValidationError[] = [];
@@ -237,7 +320,7 @@ export default function LandingPageDashboard() {
       });
     }
 
-    const heroResult = heroSchema.safeParse(heroData);
+    const heroResult = heroSchema.safeParse(heroConfig);
     if (!heroResult.success) {
       heroResult.error.issues.forEach((err) => {
         validationErrors.push({
@@ -317,7 +400,7 @@ export default function LandingPageDashboard() {
 
       console.log("Saving data...", {
         siteConfig,
-        heroData,
+        heroConfigData,
         features,
         categories,
         newsletter,
@@ -337,6 +420,27 @@ export default function LandingPageDashboard() {
       ]);
     } finally {
       setIsLoading(false);
+    }
+
+    // SITE CONFIG
+
+    try {
+      await siteConfigMutation.mutateAsync(siteConfig);
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (error: any) {
+      setSaveStatus("error");
+      setErrors(error?.message || "Failed to save changes.");
+    }
+
+    // HERO CONFIG
+    try {
+      await heroConfigMutation.mutateAsync(heroConfig);
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (error: any) {
+      setSaveStatus("error");
+      setErrors(error?.message || "Failed to save changes.");
     }
   };
 
@@ -739,131 +843,18 @@ export default function LandingPageDashboard() {
 
             {/* SITE CONFIG TAB */}
             <TabsContent value="site" className="space-y-6">
-              <Card className="border-2 hover:border-primary/20 transition-colors">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Globe className="size-6 text-primary" />
-                    </div>
-                    Site Configuration
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    Global site settings that appear across your website
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <CInput
-                      label="Site Name"
-                      value={siteConfig.name}
-                      onChange={(e) =>
-                        setSiteConfig({ ...siteConfig, name: e.target.value })
-                      }
-                      placeholder="Enter your site name"
-                    />
-                    <CInput
-                      label="Website URL"
-                      value={siteConfig.url}
-                      onChange={(e) =>
-                        setSiteConfig({ ...siteConfig, url: e.target.value })
-                      }
-                      placeholder="https://example.com"
-                    />
-                  </div>
-                  <CInput
-                    label="Site Description"
-                    value={siteConfig.description}
-                    onChange={(e) =>
-                      setSiteConfig({
-                        ...siteConfig,
-                        description: e.target.value,
-                      })
-                    }
-                    textarea
-                    placeholder="Brief description of your website"
-                  />
-                  <SectionTip text="This information appears in your header, footer, and search engine results." />
-                </CardContent>
-              </Card>
+              <SiteConfigSection
+                siteConfig={siteConfig}
+                setSiteConfig={setSiteConfig}
+              />
             </TabsContent>
 
             {/* HERO TAB */}
             <TabsContent value="hero" className="space-y-6">
-              <Card className="border-2 hover:border-primary/20 transition-colors">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <LayoutDashboard className="size-6 text-primary" />
-                    </div>
-                    Hero Section
-                    <Badge variant="secondary" className="ml-auto">
-                      {mockAnalytics.sections.hero.ctr}% CTR
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    The main banner that visitors see first
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-3 mb-6">
-                    <StatCard
-                      title="Views"
-                      value={mockAnalytics.sections.hero.views.toLocaleString()}
-                      icon={Eye}
-                    />
-                    <StatCard
-                      title="Clicks"
-                      value={mockAnalytics.sections.hero.clicks.toLocaleString()}
-                      icon={MousePointer}
-                    />
-                    <StatCard
-                      title="Completion Rate"
-                      value={`${mockAnalytics.sections.hero.completionRate}%`}
-                      icon={Target}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <CInput
-                      label="Badge Text"
-                      value={heroData.badge.text}
-                      onChange={(e) =>
-                        setHeroData({
-                          ...heroData,
-                          badge: { ...heroData.badge, text: e.target.value },
-                        })
-                      }
-                      placeholder="New Feature"
-                    />
-                    <CInput
-                      label="Hero Title"
-                      value={heroData.title}
-                      onChange={(e) =>
-                        setHeroData({ ...heroData, title: e.target.value })
-                      }
-                      placeholder="Your Amazing Product"
-                    />
-                  </div>
-                  <CInput
-                    label="Hero Subtitle"
-                    value={heroData.subtitle}
-                    onChange={(e) =>
-                      setHeroData({ ...heroData, subtitle: e.target.value })
-                    }
-                    placeholder="Catchy subtitle that explains your value"
-                  />
-                  <CInput
-                    label="Hero Description"
-                    value={heroData.description}
-                    onChange={(e) =>
-                      setHeroData({ ...heroData, description: e.target.value })
-                    }
-                    textarea
-                    placeholder="Detailed description of what you offer"
-                  />
-                  <SectionTip text="Keep your hero content concise and compelling. Focus on your main value proposition." />
-                </CardContent>
-              </Card>
+              <HeroConfigSection
+                heroConfig={heroConfig}
+                setHeroConfig={setHeroConfig}
+              />
             </TabsContent>
 
             {/* FEATURES TAB */}

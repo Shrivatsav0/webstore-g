@@ -1,7 +1,7 @@
 import z from "zod";
-import { publicProcedure } from "../orpc";
+import { protectedProcedure } from "../orpc";
 
-export const checkAdminStatus = publicProcedure
+export const checkAdminStatus = protectedProcedure
   .output(
     z.object({
       isAdmin: z.boolean(),

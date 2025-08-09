@@ -25,10 +25,15 @@ import {
   siteConfig,
 } from "../../../../data/data";
 import { Header } from "@/components/header";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
 
 export default function LandingPage() {
   const HeroIcon = heroData.badge.icon;
   const SiteLogo = siteConfig.logo;
+
+  /* ---ORPC PROCEDURES--- */
+
 
   return (
     <>

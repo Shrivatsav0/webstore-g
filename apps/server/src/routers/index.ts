@@ -2,7 +2,9 @@ import { db } from "../db";
 import { protectedProcedure, publicProcedure } from "../lib/orpc";
 import { user } from "../db/schema/auth";
 import { checkAdminStatus } from "../lib/adminProcedures/adminCheck";
-import { adminProcedure } from "../lib/adminProcedures/adminCRUD";
+import { adminProcedure } from "../lib/adminProcedures/adminProcedure";
+import { siteConfigRouter } from "@/lib/adminProcedures/siteconfig";
+import { heroConfigRoute } from "@/lib/adminProcedures/heroConfig";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -18,6 +20,8 @@ export const appRouter = {
     return db.select().from(user);
   }),
   checkAdminStatus,
+  siteConfig: siteConfigRouter,
+  heroConfig: heroConfigRoute,
   adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),

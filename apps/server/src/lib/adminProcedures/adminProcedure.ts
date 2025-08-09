@@ -1,5 +1,7 @@
+// orpc/adminProcedure.ts
+
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure } from "../orpc";
+import { protectedProcedure } from "../orpc"; // adjust path as needed
 
 export const adminProcedure = protectedProcedure.use(
   async ({ context, next }) => {
