@@ -1,8 +1,8 @@
-import { db } from "@/db";
-import { hero } from "@/db/schema/landing";
+import { db } from "../../db";
+import { hero } from "../../db/schema/landing";
 import { os } from "@orpc/server";
 import { adminProcedure } from "./adminProcedure";
-import { heroInput } from "@/zodschema/hero";
+import { heroInput } from "../../zodschema/hero";
 import { eq } from "drizzle-orm";
 
 export const listHeroConfig = os.handler(async () => {

@@ -1,9 +1,9 @@
-import { db } from "@/db";
-import { features } from "@/db/schema/landing";
-import { os } from "@orpc/server";
+import { features } from "../../db/schema/landing";
 import { adminProcedure } from "./adminProcedure";
+import { os } from "@orpc/server";
+import { db } from "../../db";
 import { z } from "zod";
-import { featuresInput } from "@/zodschema/hero";
+import { featuresInput } from "../../zodschema/hero";
 import { sql } from "drizzle-orm";
 
 // Accept an array of features
