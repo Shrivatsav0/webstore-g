@@ -3,9 +3,9 @@ import { protectedProcedure, publicProcedure } from "../lib/orpc";
 import { user } from "../db/schema/auth";
 import { checkAdminStatus } from "../lib/adminProcedures/adminCheck";
 import { adminProcedure } from "../lib/adminProcedures/adminProcedure";
-import { siteConfigRouter } from "@/lib/adminProcedures/siteconfig";
-import { heroConfigRoute } from "@/lib/adminProcedures/heroConfig";
-import { featuresConfigRoute } from "@/lib/adminProcedures/feturesConfig";
+import { siteConfigRouter } from "../lib/adminProcedures/siteconfig";
+import { heroConfigRoute } from "../lib/adminProcedures/heroConfig";
+import { featuresConfigRoute } from "../lib/adminProcedures/feturesConfig";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
