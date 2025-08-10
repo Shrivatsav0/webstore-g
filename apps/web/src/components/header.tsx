@@ -13,7 +13,9 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <ShoppingBag className="size-8 text-foreground" />
-            <span className="text-2xl font-bold text-foreground">Store</span>
+            <span className="text-2xl font-bold text-foreground">
+              BlockShop
+            </span>
           </Link>
           {/* Right side controls */}
           <div className="flex items-center gap-3">

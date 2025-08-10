@@ -58,6 +58,7 @@ import { orpc } from "@/utils/orpc";
 import SiteConfigSection from "@/components/dashboard/siteConfig";
 import HeroConfigSection from "@/components/dashboard/heroConfig";
 import { title } from "process";
+import FeaturesConfigSection from "@/components/dashboard/featuresConfig";
 
 // Mock analytics data
 const mockAnalytics = {
@@ -127,6 +128,7 @@ const heroSchema = z.object({
 });
 
 const featureSchema = z.object({
+  id: z.number(),
   title: z.string().min(1, "Feature title required").max(80, "Title too long"),
   description: z
     .string()
@@ -254,7 +256,48 @@ export default function LandingPageDashboard() {
     })
   );
 
-  // Calculate completion percentage
+  /* FEATURES SECTION */
+  const {
+    data: featuresConfigData,
+    isLoading: isFeaturesConfigLoading,
+    error: featuresConfigError,
+  } = useQuery(orpc.featuresConfig.list.queryOptions());
+
+  type Feature = {
+    id: number;
+    title: string;
+    description: string;
+  };
+
+  const [featuresConfig, setFeaturesConfig] = useState<Feature[]>([
+    { id: 1, title: "", description: "" },
+    { id: 2, title: "", description: "" },
+    { id: 3, title: "", description: "" },
+    { id: 4, title: "", description: "" },
+  ]);
+
+  useEffect(() => {
+    if (featuresConfigData && featuresConfigData.length > 0) {
+      setFeaturesConfig(
+        featuresConfigData.map((f: any) => ({
+          id: f.id ?? "",
+          title: f.title ?? "",
+          description: f.description ?? "",
+        }))
+      );
+    }
+  }, [featuresConfigData]);
+
+  const featuresConfigMutation = useMutation(
+    orpc.featuresConfig.upsert.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.featuresConfig.list.queryKey(),
+        });
+      },
+    })
+  );
+
   const completionStats = useMemo(() => {
     let totalFields = 0;
     let completedFields = 0;
@@ -276,7 +319,7 @@ export default function LandingPageDashboard() {
     checkField(heroConfig.description);
 
     // Features
-    features.forEach((feature) => {
+    featuresConfig.forEach((feature) => {
       checkField(feature.title);
       checkField(feature.description);
     });
@@ -331,7 +374,7 @@ export default function LandingPageDashboard() {
       });
     }
 
-    features.forEach((feature, index) => {
+    featuresConfig.forEach((feature, index) => {
       const featureResult = featureSchema.safeParse(feature);
       if (!featureResult.success) {
         featureResult.error.issues.forEach((err) => {
@@ -441,6 +484,18 @@ export default function LandingPageDashboard() {
     } catch (error: any) {
       setSaveStatus("error");
       setErrors(error?.message || "Failed to save changes.");
+    }
+
+    // features config
+    try {
+      await featuresConfigMutation.mutateAsync(featuresConfig);
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (error: any) {
+      setSaveStatus("error");
+      setErrors(error?.message || "Failed to save changes.");
+      console.log("Saving features:", featuresConfig);
+      console.log("error message = ", error?.message);
     }
   };
 
@@ -592,15 +647,15 @@ export default function LandingPageDashboard() {
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-6 mb-8">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <BarChart3 className="size-4" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="site" className="flex items-center gap-2">
+              {/* <TabsTrigger value="site" className="flex items-center gap-2">
                 <Globe className="size-4" />
                 Site Config
-              </TabsTrigger>
+              </TabsTrigger> */}
               <TabsTrigger value="hero" className="flex items-center gap-2">
                 <LayoutDashboard className="size-4" />
                 Hero
@@ -616,10 +671,10 @@ export default function LandingPageDashboard() {
                 <ShoppingBag className="size-4" />
                 Categories
               </TabsTrigger>
-              <TabsTrigger value="other" className="flex items-center gap-2">
+              {/* <TabsTrigger value="other" className="flex items-center gap-2">
                 <Settings className="size-4" />
                 Other
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             {/* OVERVIEW TAB */}
@@ -859,76 +914,10 @@ export default function LandingPageDashboard() {
 
             {/* FEATURES TAB */}
             <TabsContent value="features" className="space-y-6">
-              <Card className="border-2 hover:border-primary/20 transition-colors">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Star className="size-6 text-primary" />
-                    </div>
-                    Features
-                    <Badge variant="secondary" className="ml-auto">
-                      {mockAnalytics.sections.features.engagement}% Engagement
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    Highlight what makes your product special
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-3 mb-6">
-                    <StatCard
-                      title="Section Views"
-                      value={mockAnalytics.sections.features.views.toLocaleString()}
-                      icon={Eye}
-                    />
-                    <StatCard
-                      title="Avg. Time Spent"
-                      value={mockAnalytics.sections.features.avgTimeSpent}
-                      icon={Clock}
-                    />
-                    <StatCard
-                      title="Most Viewed"
-                      value={mockAnalytics.sections.features.mostViewed}
-                      icon={Star}
-                    />
-                  </div>
-
-                  {features.map((feature, i) => (
-                    <div
-                      key={i}
-                      className="p-4 rounded-lg border bg-card/50 space-y-4"
-                    >
-                      <h4 className="font-medium text-sm text-muted-foreground">
-                        Feature {i + 1}
-                      </h4>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <CInput
-                          label="Title"
-                          value={feature.title}
-                          onChange={(e) => {
-                            const updated = [...features];
-                            updated[i].title = e.target.value;
-                            setFeatures(updated);
-                          }}
-                          placeholder="Feature name"
-                        />
-                        <CInput
-                          label="Description"
-                          value={feature.description}
-                          onChange={(e) => {
-                            const updated = [...features];
-                            updated[i].description = e.target.value;
-                            setFeatures(updated);
-                          }}
-                          textarea
-                          placeholder="Explain this feature's benefit"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <SectionTip text="Focus on benefits rather than just features. How does each feature help your customers?" />
-                </CardContent>
-              </Card>
+              <FeaturesConfigSection
+                featuresConfig={featuresConfig}
+                setFeaturesConfig={setFeaturesConfig}
+              />
             </TabsContent>
 
             {/* CATEGORIES TAB */}

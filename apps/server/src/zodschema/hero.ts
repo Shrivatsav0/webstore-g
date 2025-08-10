@@ -18,8 +18,10 @@ export const heroInput = z.object({
 export const heroUpdate = heroInput.extend({ id: z.number() });
 
 // features
+
 export const featuresInput = z.object({
-  title: z.string().max(80),
+  id: z.number(), // or z.string() if your id is a string
+  title: z.string(),
   description: z.string(),
 });
 export const featuresUpdate = featuresInput.extend({ id: z.number() });
