@@ -6,8 +6,8 @@ import { adminProcedure } from "../lib/adminProcedures/adminProcedure";
 import { siteConfigRouter } from "../lib/adminProcedures/siteconfig";
 import { heroConfigRoute } from "../lib/adminProcedures/heroConfig";
 import { featuresConfigRoute } from "../lib/adminProcedures/feturesConfig";
-import { categoriesRoute } from "@/lib/adminProcedures/categories";
-import { productsRoute } from "@/lib/adminProcedures/products";
+import { categoriesRoute } from "../lib/adminProcedures/categories";
+import { productsRoute } from "../lib/adminProcedures/products";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
