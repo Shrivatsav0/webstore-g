@@ -6,6 +6,8 @@ import { adminProcedure } from "../lib/adminProcedures/adminProcedure";
 import { siteConfigRouter } from "../lib/adminProcedures/siteconfig";
 import { heroConfigRoute } from "../lib/adminProcedures/heroConfig";
 import { featuresConfigRoute } from "../lib/adminProcedures/feturesConfig";
+import { categoriesRoute } from "@/lib/adminProcedures/categories";
+import { productsRoute } from "@/lib/adminProcedures/products";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -24,6 +26,8 @@ export const appRouter = {
   siteConfig: siteConfigRouter,
   heroConfig: heroConfigRoute,
   featuresConfig: featuresConfigRoute,
+  categories: categoriesRoute,
+  products: productsRoute,
   adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),

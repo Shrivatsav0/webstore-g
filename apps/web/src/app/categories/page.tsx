@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -15,39 +16,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  categoryItems as rawCategories,
-  type CategoryItem,
-} from "../../../../../data/data";
 import { Header } from "@/components/header";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
+import { Loader2, Home, RefreshCw } from "lucide-react";
 
 type SortKey = "featured" | "alpha" | "count-desc";
 
-const normalizeCategories = (raw: CategoryItem[]): CategoryItem[] =>
-  raw.map((c) => ({
-    id: c.id ?? crypto.randomUUID(),
-    title: c.title ?? "Untitled",
-    description: c.description ?? "",
-    image: c.image ?? "/placeholder.svg",
-    badge: c.badge,
-    href: c.href ?? "#",
-    count: typeof c.count === "number" ? c.count : undefined,
-  }));
-
 export default function CategoriesPage() {
-  const CATS = React.useMemo(() => normalizeCategories(rawCategories), []);
   const [query, setQuery] = React.useState("");
   const [sort, setSort] = React.useState<SortKey>("featured");
 
+  const {
+    data: categories,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    ...orpc.categories.list.queryOptions(),
+    retry: 1, // Only retry once
+    retryOnMount: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
   const filtered = React.useMemo(() => {
+    if (!categories) return [];
+
     const q = query.trim().toLowerCase();
-    let res = CATS.filter(
+    let res = categories.filter(
       (c) =>
         q.length === 0 ||
         c.title.toLowerCase().includes(q) ||
         c.description.toLowerCase().includes(q) ||
         c.badge?.toLowerCase().includes(q)
     );
+
     switch (sort) {
       case "alpha":
         res = res.sort((a, b) => a.title.localeCompare(b.title));
@@ -60,7 +64,75 @@ export default function CategoriesPage() {
         break;
     }
     return res;
-  }, [CATS, query, sort]);
+  }, [categories, query, sort]);
+
+  const handleRetry = () => {
+    refetch();
+  };
+
+  if (error) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          {/* Decorative top background */}
+          <div aria-hidden className="relative">
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-muted/30 to-background" />
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,theme(colors.primary/15),transparent_60%)] blur-3xl" />
+            <div className="absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_70%)]">
+              <div className="size-full bg-[linear-gradient(to_right,theme(colors.border/40)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border/40)_1px,transparent_1px)] bg-[size:36px_36px]" />
+            </div>
+          </div>
+
+          <section className="container mx-auto px-4 py-10">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-8 rounded-lg border border-destructive/20 bg-destructive/5 p-8 backdrop-blur supports-[backdrop-filter]:bg-destructive/5">
+                <h1 className="mb-4 text-3xl font-semibold tracking-tight md:text-4xl">
+                  Error Loading Categories
+                </h1>
+                <p className="mb-6 text-muted-foreground">
+                  Failed to load categories. Please try again or return to the
+                  home page.
+                </p>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <Button
+                    onClick={handleRetry}
+                    variant="default"
+                    className="w-full backdrop-blur supports-[backdrop-filter]:bg-primary/90 sm:w-auto"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="mr-2 size-4" />
+                        Try Again
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:w-auto"
+                  >
+                    <Link href="/">
+                      <Home className="mr-2 size-4" />
+                      Go Home
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
@@ -134,70 +206,84 @@ export default function CategoriesPage() {
             </div>
           </header>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="size-8 animate-spin" />
+            </div>
+          )}
+
           {/* Grid */}
-          <ul className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((c, idx) => (
-              <li key={c.id}>
-                <Link
-                  href={c.href || "#"}
-                  className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <Card className="group relative h-80 overflow-hidden border-border/60 bg-card/70 transition-all duration-300 hover:shadow-lg">
-                    {/* Background image */}
-                    <div className="absolute inset-0">
-                      <Image
-                        src={c.image}
-                        alt={c.title}
-                        fill
-                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-                        priority={idx < 3}
-                      />
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/30 to-background/10" />
-                    </div>
-
-                    {/* Floating content */}
-                    <div className="absolute inset-x-4 bottom-4 z-10">
-                      <div className="rounded-lg border border-border/60 bg-background/60 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/40">
-                        <div className="mb-2 flex items-center justify-between">
-                          {c.badge ? (
-                            <Badge className="bg-secondary/60 text-secondary-foreground backdrop-blur hover:bg-secondary/70">
-                              {c.badge}
-                            </Badge>
-                          ) : (
-                            <span />
-                          )}
-                          {typeof c.count === "number" ? (
-                            <span className="text-xs text-muted-foreground">
-                              {c.count} items
-                            </span>
-                          ) : null}
-                        </div>
-                        <CardTitle className="mb-1 text-xl">
-                          {c.title}
-                        </CardTitle>
-                        <CardContent className="p-0">
-                          <p className="text-foreground/80">{c.description}</p>
-                        </CardContent>
+          {!isLoading && (
+            <ul className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((c, idx) => (
+                <li key={c.id}>
+                  <Link
+                    href={c.href || "#"}
+                    className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Card className="group relative h-80 overflow-hidden border-border/60 bg-card/70 transition-all duration-300 hover:shadow-lg">
+                      {/* Background image */}
+                      <div className="absolute inset-0">
+                        <Image
+                          src={c.image}
+                          alt={c.title}
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+                          priority={idx < 3}
+                        />
+                        {/* Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/30 to-background/10" />
                       </div>
-                    </div>
 
-                    {/* Inner border */}
-                    <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-border/60" />
-                  </Card>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                      {/* Floating content */}
+                      <div className="absolute inset-x-4 bottom-4 z-10">
+                        <div className="rounded-lg border border-border/60 bg-background/60 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/40">
+                          <div className="mb-2 flex items-center justify-between">
+                            {c.badge ? (
+                              <Badge className="bg-secondary/60 text-secondary-foreground backdrop-blur hover:bg-secondary/70">
+                                {c.badge}
+                              </Badge>
+                            ) : (
+                              <span />
+                            )}
+                            {typeof c.count === "number" ? (
+                              <span className="text-xs text-muted-foreground">
+                                {c.count} items
+                              </span>
+                            ) : null}
+                          </div>
+                          <CardTitle className="mb-1 text-xl">
+                            {c.title}
+                          </CardTitle>
+                          <CardContent className="p-0">
+                            <p className="text-foreground/80">
+                              {c.description}
+                            </p>
+                          </CardContent>
+                        </div>
+                      </div>
+
+                      {/* Inner border */}
+                      <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-border/60" />
+                    </Card>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
 
           {/* Footer line showing totals */}
-          <div className="mt-10 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {filtered.length} of {CATS.length} categories
-            </p>
-            <Separator className="hidden flex-1 md:block" />
-          </div>
+          {!isLoading && (
+            <div className="mt-10 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {filtered.length} of {categories?.length || 0}{" "}
+                categories
+              </p>
+              <Separator className="hidden flex-1 md:block" />
+            </div>
+          )}
         </section>
       </main>
     </>
