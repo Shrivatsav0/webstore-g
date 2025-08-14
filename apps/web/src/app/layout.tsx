@@ -21,8 +21,9 @@ const nunito_sans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "my-better-t-app",
-  description: "my-better-t-app",
+  title: "BlockShop",
+  description:
+    "BlockShop is a platform for buying and selling products for minecraft. Buy Random Items, Sell Random Items, and more!",
 };
 
 export default function RootLayout({
@@ -36,10 +37,7 @@ export default function RootLayout({
         className={`${nunito_sans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="grid grid-rows-[auto_1fr] h-svh">
-
-            {children}
-          </div>
+          <div className="grid grid-rows-[auto_1fr] h-svh">{children}</div>
         </Providers>
       </body>
     </html>

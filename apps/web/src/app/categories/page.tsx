@@ -219,7 +219,7 @@ export default function CategoriesPage() {
               {filtered.map((c, idx) => (
                 <li key={c.id}>
                   <Link
-                    href={c.href || "#"}
+                    href={`/categories/${c.id}`}
                     className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Card className="group relative h-80 overflow-hidden border-border/60 bg-card/70 transition-all duration-300 hover:shadow-lg">

@@ -18,126 +18,215 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { categoriesFull, type Product } from "../../../../../../data/data";
 import { Header } from "@/components/header";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
+import { Loader2, Home, RefreshCw, ShoppingCart } from "lucide-react";
 
-type SortKey = "relevance" | "price-asc" | "price-desc" | "rating-desc";
-
-function getCategoryBySlug(slug: string) {
-  return categoriesFull.find((c) => c.slug === slug) || null;
-}
-
-// Pull products directly from the category (supports both products and sections)
-function getProductsFromCategory(category: {
-  products?: Product[];
-  sections?: { products: Product[] }[];
-}): Product[] {
-  if (category.products?.length) return category.products;
-  if (category.sections?.length)
-    return category.sections.flatMap((s) => s.products);
-  return [];
-}
+type SortKey = "newest" | "price-asc" | "price-desc" | "name-asc";
 
 export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
-
-  const category = React.useMemo(
-    () => (slug ? getCategoryBySlug(slug) : null),
-    [slug]
-  );
-
-  const baseProducts = React.useMemo(
-    () => (category ? getProductsFromCategory(category) : []),
-    [category]
-  );
+  const categoryId = slug ? parseInt(slug) : undefined;
 
   const [query, setQuery] = React.useState("");
-  const [sort, setSort] = React.useState<SortKey>("relevance");
+  const [sort, setSort] = React.useState<SortKey>("newest");
   const [onlyInStock, setOnlyInStock] = React.useState(false);
   const [priceRange, setPriceRange] = React.useState<[number, number]>([
-    0, 25000,
+    0, 10000,
   ]);
 
-  React.useEffect(() => {
-    if (!baseProducts.length) {
-      setPriceRange([0, 25000]);
-      setOnlyInStock(false);
-      setQuery("");
-      setSort("relevance");
-      return;
-    }
-    const prices = baseProducts.map((p) => p.price);
-    setPriceRange([Math.min(...prices), Math.max(...prices)]);
-    setOnlyInStock(false);
-    setQuery("");
-    setSort("relevance");
-  }, [slug, baseProducts.length]);
+  // Fetch category info
+  const {
+    data: category,
+    isLoading: categoryLoading,
+    error: categoryError,
+    refetch: refetchCategory,
+  } = useQuery({
+    ...orpc.categories.get.queryOptions({
+      input: { id: categoryId! },
+    }),
+    enabled: !!categoryId,
+    retry: 1,
+    retryOnMount: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
 
-  const filtered = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const [min, max] = priceRange;
-    let res = baseProducts.filter((p) => {
-      const matchesQuery =
-        q.length === 0 ||
-        p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q));
-      const matchesStock = !onlyInStock || p.inStock;
-      const matchesPrice = p.price >= min && p.price <= max;
-      return matchesQuery && matchesStock && matchesPrice;
+  // Fetch products for this category
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useQuery({
+    ...orpc.products.list.queryOptions({
+      input: {
+        page: 1,
+        limit: 50, // Get more products for client-side filtering
+        categoryId,
+        search: query.trim() || undefined,
+        isActive: true,
+      },
+    }),
+    enabled: !!categoryId,
+    retry: 1,
+    retryOnMount: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Filter and sort products client-side
+  const filteredProducts = React.useMemo(() => {
+    if (!productsData?.data) return [];
+
+    let filtered = productsData.data.filter((product) => {
+      const matchesStock = !onlyInStock || (product.stock && product.stock > 0);
+      const matchesPrice =
+        product.price >= priceRange[0] && product.price <= priceRange[1];
+      return matchesStock && matchesPrice;
     });
 
+    // Sort products
     switch (sort) {
       case "price-asc":
-        res = res.slice().sort((a, b) => a.price - b.price);
+        filtered = filtered.sort((a, b) => a.price - b.price);
         break;
       case "price-desc":
-        res = res.slice().sort((a, b) => b.price - a.price);
+        filtered = filtered.sort((a, b) => b.price - a.price);
         break;
-      case "rating-desc":
-        res = res.slice().sort((a, b) => b.rating - a.rating);
+      case "name-asc":
+        filtered = filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      default:
-        res = res.slice().sort((a, b) => {
-          const aq =
-            Number(a.name.toLowerCase().includes(q)) +
-            Number(a.description.toLowerCase().includes(q));
-          const bq =
-            Number(b.name.toLowerCase().includes(q)) +
-            Number(b.description.toLowerCase().includes(q));
-          if (bq !== aq) return bq - aq;
-          return b.rating - a.rating;
-        });
+      default: // newest
+        filtered = filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
     }
-    return res;
-  }, [baseProducts, query, sort, onlyInStock, priceRange]);
 
-  if (!slug) {
+    return filtered;
+  }, [productsData?.data, onlyInStock, priceRange, sort]);
+
+  // Update price range when products change
+  React.useEffect(() => {
+    if (productsData?.data?.length) {
+      const prices = productsData.data.map((p) => p.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      setPriceRange([minPrice, maxPrice]);
+    }
+  }, [productsData?.data]);
+
+  const isLoading = categoryLoading || productsLoading;
+  const error = categoryError || productsError;
+
+  const handleRetry = () => {
+    refetchCategory();
+    refetchProducts();
+  };
+
+  if (!slug || !categoryId) {
     return (
-      <main className="min-h-screen bg-background text-foreground">
-        <section className="container mx-auto px-4 py-10">
-          <p className="text-muted-foreground">Loading category…</p>
-        </section>
-      </main>
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <p className="text-muted-foreground">Loading category…</p>
+          </section>
+        </main>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-8 rounded-lg border border-destructive/20 bg-destructive/5 p-8 backdrop-blur">
+                <h1 className="mb-4 text-3xl font-semibold tracking-tight md:text-4xl">
+                  Error Loading Category
+                </h1>
+                <p className="mb-6 text-muted-foreground">
+                  Failed to load category or products. Please try again.
+                </p>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <Button
+                    onClick={handleRetry}
+                    variant="default"
+                    className="w-full sm:w-auto"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="mr-2 size-4" />
+                        Try Again
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                  >
+                    <Link href="/categories">
+                      <Home className="mr-2 size-4" />
+                      Back to Categories
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="size-8 animate-spin" />
+            </div>
+          </section>
+        </main>
+      </>
     );
   }
 
   if (!category) {
     return (
-      <main className="min-h-screen bg-background text-foreground">
-        <section className="container mx-auto px-4 py-10">
-          <h1 className="mb-2 text-2xl font-semibold">Category not found</h1>
-          <p className="text-muted-foreground">
-            The requested category “{slug}” doesn’t exist.
-          </p>
-          <div className="mt-6">
-            <Button asChild>
-              <Link href="/categories">Back to categories</Link>
-            </Button>
-          </div>
-        </section>
-      </main>
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <h1 className="mb-2 text-2xl font-semibold">Category not found</h1>
+            <p className="text-muted-foreground">
+              The requested category doesn't exist.
+            </p>
+            <div className="mt-6">
+              <Button asChild>
+                <Link href="/categories">Back to categories</Link>
+              </Button>
+            </div>
+          </section>
+        </main>
+      </>
     );
   }
 
@@ -186,7 +275,8 @@ export default function CategoryPage() {
         <section className="container mx-auto px-4 py-10">
           <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {filtered.length} of {baseProducts.length} items in{" "}
+              Showing {filteredProducts.length} of{" "}
+              {productsData?.pagination.total || 0} items in{" "}
               <span className="font-medium text-foreground">
                 {category.title}
               </span>
@@ -230,10 +320,10 @@ export default function CategoryPage() {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent align="end">
-                  <SelectItem value="relevance">Relevance</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
                   <SelectItem value="price-asc">Price: Low to High</SelectItem>
                   <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                  <SelectItem value="rating-desc">Top Rated</SelectItem>
+                  <SelectItem value="name-asc">Name: A to Z</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -252,56 +342,61 @@ export default function CategoryPage() {
               </label>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">Price</span>
-              <div className="w-56">
-                <Slider
-                  value={priceRange}
-                  onValueChange={(v) =>
-                    setPriceRange([v[0], v[1]] as [number, number])
-                  }
-                  min={
-                    baseProducts.length
-                      ? Math.min(...baseProducts.map((p) => p.price))
-                      : 0
-                  }
-                  max={
-                    baseProducts.length
-                      ? Math.max(...baseProducts.map((p) => p.price))
-                      : 25000
-                  }
-                  step={50}
-                />
+            {productsData?.data?.length && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Price</span>
+                <div className="w-56">
+                  <Slider
+                    value={priceRange}
+                    onValueChange={(v) =>
+                      setPriceRange([v[0], v[1]] as [number, number])
+                    }
+                    min={Math.min(...productsData.data.map((p) => p.price))}
+                    max={Math.max(...productsData.data.map((p) => p.price))}
+                    step={50}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  ${Math.round(priceRange[0] / 100)} - $
+                  {Math.round(priceRange[1] / 100)}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground">
-                ${Math.round(priceRange[0] / 100)} - $
-                {Math.round(priceRange[1] / 100)}
-              </span>
-            </div>
+            )}
           </div>
 
           {/* Grid */}
-          <CategoryGrid products={filtered} slug={slug} />
+          <CategoryGrid products={filteredProducts} />
         </section>
       </main>
     </>
   );
 }
 
-function CategoryGrid({
-  products,
-  slug,
-}: {
-  products: Product[];
-  slug: string;
-}) {
+function CategoryGrid({ products }: { products: any[] }) {
+  const params = useParams<{ slug: string }>();
+  const categoryId = params?.slug; // This should be the category ID
+
+  if (products.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="mb-4 rounded-lg border border-border/60 bg-muted/20 p-8">
+          <h3 className="mb-2 text-xl font-semibold">No products found</h3>
+          <p className="text-muted-foreground">
+            Try adjusting your filters or search terms.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {products.map((p, idx) => (
         <li key={p.id}>
           <Card className="group relative h-[380px] overflow-hidden border-border/60 bg-card/70 transition-all duration-300 hover:shadow-lg">
+            {/* Main product link */}
             <Link
-              href={`/categories/${slug}/${p.slug ?? p.id}`}
+              href={`/categories/${categoryId}/${p.id}`}
               aria-label={`View ${p.name}`}
               className="absolute inset-0 z-[1]"
             />
@@ -320,21 +415,24 @@ function CategoryGrid({
 
             <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
               <div className="flex flex-wrap gap-2">
-                {p.tags.slice(0, 2).map((t) => (
+                {p.category && (
                   <Badge
-                    key={t}
                     variant="secondary"
                     className="bg-secondary/50 text-secondary-foreground backdrop-blur"
                   >
-                    {t}
+                    {p.category.title}
                   </Badge>
-                ))}
+                )}
               </div>
-              {!p.inStock && (
+              {!p.stock || p.stock === 0 ? (
                 <Badge className="bg-muted text-muted-foreground backdrop-blur">
                   Out of stock
                 </Badge>
-              )}
+              ) : p.stock < 10 ? (
+                <Badge className="bg-orange-500/80 text-white backdrop-blur">
+                  Low stock
+                </Badge>
+              ) : null}
             </div>
 
             <div className="absolute inset-x-4 bottom-4 z-10">
@@ -344,7 +442,7 @@ function CategoryGrid({
                     {p.name}
                   </CardTitle>
                   <div className="text-base font-semibold">
-                    {formatCents(p.price)}
+                    ${(p.price / 100).toFixed(2)}
                   </div>
                 </div>
                 <p className="line-clamp-2 text-sm text-muted-foreground">
@@ -353,23 +451,26 @@ function CategoryGrid({
 
                 <div className="mt-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <StarRating rating={p.rating} />
-                    <span className="text-xs text-muted-foreground">
-                      {p.rating.toFixed(1)}
-                    </span>
+                    {p.stock && (
+                      <span className="text-xs text-muted-foreground">
+                        {p.stock} in stock
+                      </span>
+                    )}
                   </div>
 
                   <div className="relative z-20 flex items-center gap-2">
                     <Button
                       size="sm"
-                      disabled={!p.inStock}
+                      disabled={!p.stock || p.stock === 0}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // TODO: add to cart logic
+                        // Navigate to product detail page
+                        window.location.href = `/categories/${categoryId}/${p.id}`;
                       }}
                     >
-                      Add to cart
+                      <ShoppingCart className="mr-1 size-3" />
+                      View Product
                     </Button>
                   </div>
                 </div>
@@ -382,33 +483,4 @@ function CategoryGrid({
       ))}
     </ul>
   );
-}
-
-function StarRating({ rating }: { rating: number }) {
-  const filled = Math.round(rating);
-  return (
-    <div className="flex items-center">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg
-          key={i}
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          className={cn(
-            i < filled ? "text-primary" : "text-muted-foreground/40"
-          )}
-          aria-hidden="true"
-        >
-          <path
-            fill="currentColor"
-            d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-          />
-        </svg>
-      ))}
-    </div>
-  );
-}
-
-function formatCents(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
 }

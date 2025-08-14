@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -15,199 +15,191 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  categoriesFull,
-  categoryItems,
-  Products,
-  type Product,
-} from "../../../../../../../data/data";
 import { Header } from "@/components/header";
-
-type CategoryResolved = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  image: string;
-  badge?: string;
-  products?: Product[];
-  sections?: {
-    id: string;
-    title: string;
-    description?: string;
-    products: Product[];
-  }[];
-} | null;
-
-function getCategoryBySlug(slug: string): CategoryResolved {
-  // Prefer full categories
-  const full = categoriesFull.find((c) => c.slug === slug);
-  if (full) return full;
-
-  // Fallback to categoryItems (no products there)
-  const item = categoryItems.find((c) => {
-    const href = c.href || "";
-    const m = href.match(/\/categories\/([^/?#]+)/);
-    const inferred =
-      m?.[1] ||
-      c.title
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "");
-    return inferred === slug;
-  });
-
-  if (!item) return null;
-
-  return {
-    id: item.id,
-    slug,
-    title: item.title,
-    description: item.description,
-    image: item.image,
-    badge: item.badge,
-    products: undefined,
-    sections: undefined,
-  };
-}
-
-// Find a product inside a category, searching sections then flat products
-function findProductInCategory(
-  category: CategoryResolved,
-  productSlug: string
-) {
-  if (!category) return null;
-
-  const inSections =
-    category.sections
-      ?.flatMap((s) => s.products)
-      .find((p) => (p.slug || p.id) === productSlug) || null;
-
-  if (inSections) return inSections;
-
-  const inFlat =
-    category.products?.find((p) => (p.slug || p.id) === productSlug) || null;
-
-  if (inFlat) return inFlat;
-
-  // Fallback: loosely match from global Products by tags relevant to category
-  const tagMap: Record<string, string[]> = {
-    ranks: ["rank"],
-    "crate-keys": ["crate", "key"],
-    cosmetics: ["cosmetic", "pet", "hat", "effect", "trail", "aura"],
-    boosters: ["booster"],
-    perks: ["perk"],
-    bundles: ["bundle"],
-    pets: ["pet"],
-    titles: ["title"],
-    misc: ["misc"],
-  };
-  const wanted = tagMap[category.slug];
-  if (!wanted) return null;
-
-  return (
-    Products.find(
-      (p) =>
-        (p.slug || p.id) === productSlug &&
-        p.tags.some((t) => wanted.includes(t.toLowerCase()))
-    ) || null
-  );
-}
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
+import {
+  Loader2,
+  Home,
+  RefreshCw,
+  ShoppingCart,
+  ArrowLeft,
+} from "lucide-react";
 
 function formatCents(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-function StarRating({ rating }: { rating: number }) {
-  const filled = Math.round(rating);
-  return (
-    <div className="flex items-center">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg
-          key={i}
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          className={cn(
-            i < filled ? "text-primary" : "text-muted-foreground/40"
-          )}
-          aria-hidden="true"
-        >
-          <path
-            fill="currentColor"
-            d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-          />
-        </svg>
-      ))}
-    </div>
-  );
-}
-
 export default function ProductDetailPage() {
   const params = useParams<{ slug: string; productSlug: string }>();
-  const slug = params?.slug;
-  const productSlug = params?.productSlug;
+  const categoryId = params?.slug ? parseInt(params.slug) : undefined;
+  const productId = params?.productSlug
+    ? parseInt(params.productSlug)
+    : undefined;
 
-  const category = React.useMemo(
-    () => (slug ? getCategoryBySlug(slug) : null),
-    [slug]
-  );
+  // Fetch product details
+  const {
+    data: product,
+    isLoading: productLoading,
+    error: productError,
+    refetch: refetchProduct,
+  } = useQuery({
+    ...orpc.products.get.queryOptions({
+      input: { id: productId! },
+    }),
+    enabled: !!productId,
+    retry: 1,
+    retryOnMount: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
 
-  const product = React.useMemo(
-    () =>
-      slug && productSlug ? findProductInCategory(category, productSlug) : null,
-    [slug, productSlug, category]
-  );
+  // Fetch category info
+  const {
+    data: category,
+    isLoading: categoryLoading,
+    error: categoryError,
+  } = useQuery({
+    ...orpc.categories.get.queryOptions({
+      input: { id: categoryId! },
+    }),
+    enabled: !!categoryId,
+    retry: 1,
+    retryOnMount: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
 
-  if (!slug || !productSlug) {
+  // Fetch related products from the same category
+  const { data: relatedProductsData, isLoading: relatedLoading } = useQuery({
+    ...orpc.products.list.queryOptions({
+      input: {
+        page: 1,
+        limit: 6,
+        categoryId,
+        isActive: true,
+      },
+    }),
+    enabled: !!categoryId && !!product,
+    retry: 1,
+    retryOnMount: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const isLoading = productLoading || categoryLoading;
+  const error = productError || categoryError;
+
+  const handleRetry = () => {
+    refetchProduct();
+  };
+
+  if (!categoryId || !productId) {
     return (
-      <main className="min-h-screen bg-background text-foreground">
-        <section className="container mx-auto px-4 py-10">
-          <p className="text-muted-foreground">Loading product…</p>
-        </section>
-      </main>
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <p className="text-muted-foreground">Loading product…</p>
+          </section>
+        </main>
+      </>
     );
   }
 
-  if (!category) {
+  if (error) {
     return (
-      <main className="min-h-screen bg-background text-foreground">
-        <section className="container mx-auto px-4 py-10">
-          <h1 className="mb-2 text-2xl font-semibold">Category not found</h1>
-          <p className="text-muted-foreground">
-            The requested category “{slug}” doesn’t exist.
-          </p>
-          <div className="mt-6">
-            <Button asChild>
-              <Link href="/categories">Back to categories</Link>
-            </Button>
-          </div>
-        </section>
-      </main>
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-8 rounded-lg border border-destructive/20 bg-destructive/5 p-8 backdrop-blur">
+                <h1 className="mb-4 text-3xl font-semibold tracking-tight md:text-4xl">
+                  Error Loading Product
+                </h1>
+                <p className="mb-6 text-muted-foreground">
+                  Failed to load product details. Please try again.
+                </p>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <Button
+                    onClick={handleRetry}
+                    variant="default"
+                    className="w-full sm:w-auto"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="mr-2 size-4" />
+                        Try Again
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                  >
+                    <Link href="/categories">
+                      <Home className="mr-2 size-4" />
+                      Back to Categories
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="size-8 animate-spin" />
+            </div>
+          </section>
+        </main>
+      </>
     );
   }
 
   if (!product) {
     return (
-      <main className="min-h-screen bg-background text-foreground">
-        <section className="container mx-auto px-4 py-10">
-          <h1 className="mb-2 text-2xl font-semibold">Product not found</h1>
-          <p className="text-muted-foreground">
-            We couldn’t find that product in {category.title}.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <Button asChild variant="secondary">
-              <Link href={`/categories/${category.slug}`}>
-                Back to {category.title}
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/categories">All categories</Link>
-            </Button>
-          </div>
-        </section>
-      </main>
+      <>
+        <Header />
+        <main className="min-h-screen bg-background text-foreground">
+          <section className="container mx-auto px-4 py-10">
+            <h1 className="mb-2 text-2xl font-semibold">Product not found</h1>
+            <p className="text-muted-foreground">
+              We couldn't find that product.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <Button asChild variant="secondary">
+                <Link href={`/categories/${categoryId}`}>
+                  <ArrowLeft className="mr-2 size-4" />
+                  Back to {category?.title || "Category"}
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/categories">All categories</Link>
+              </Button>
+            </div>
+          </section>
+        </main>
+      </>
     );
   }
 
@@ -237,31 +229,30 @@ export default function ProductDetailPage() {
                   </Link>
                   <span className="text-muted-foreground">/</span>
                   <Link
-                    href={`/categories/${category.slug}`}
+                    href={`/categories/${categoryId}`}
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    {category.title}
+                    {category?.title || "Category"}
                   </Link>
                   <span className="text-muted-foreground">/</span>
                   <span className="text-foreground">{product.name}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {category.badge ? (
+                  {category && (
                     <Badge className="bg-secondary/60 text-secondary-foreground">
-                      {category.badge}
+                      {category.title}
                     </Badge>
-                  ) : null}
-                  {product.discountPercent ? (
-                    <Badge className="bg-emerald-500/80 text-emerald-50">
-                      -{product.discountPercent}%
-                    </Badge>
-                  ) : null}
-                  {!product.inStock && (
+                  )}
+                  {!product.stock || product.stock === 0 ? (
                     <Badge className="bg-muted text-muted-foreground">
                       Out of stock
                     </Badge>
-                  )}
+                  ) : product.stock < 10 ? (
+                    <Badge className="bg-orange-500/80 text-white">
+                      Low stock
+                    </Badge>
+                  ) : null}
                 </div>
               </div>
 
@@ -278,9 +269,9 @@ export default function ProductDetailPage() {
         {/* Content */}
         <section className="container mx-auto px-4 py-10">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Left: Image and metadata (card) */}
+            {/* Left: Image and metadata */}
             <div className="flex flex-col gap-4 sm:gap-6">
-              {/* Image-only card */}
+              {/* Image card */}
               <Card className="group relative overflow-hidden rounded-2xl border-border/60 bg-card/70 py-0">
                 <div className="relative aspect-video w-full">
                   <Image
@@ -295,7 +286,7 @@ export default function ProductDetailPage() {
                 </div>
               </Card>
 
-              {/* Details card below image */}
+              {/* Details card */}
               <Card className="rounded-2xl border-border/60 bg-card/70 mt-3 py-5">
                 <CardContent className="flex flex-col justify-end gap-4 p-4 sm:p-6">
                   <div className="flex items-start justify-between">
@@ -310,13 +301,17 @@ export default function ProductDetailPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-foreground/80">Rating</span>
-                    <div className="flex items-center gap-2">
-                      <StarRating rating={product.rating} />
-                      <span className="text-xs text-foreground/80">
-                        {product.rating.toFixed(1)}
-                      </span>
-                    </div>
+                    <span className="text-sm text-foreground/80">Category</span>
+                    <span className="text-xs text-foreground/80">
+                      {category?.title || "Unknown"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-foreground/80">Stock</span>
+                    <span className="text-xs text-foreground/80">
+                      {product.stock || 0} available
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -326,28 +321,16 @@ export default function ProductDetailPage() {
                     <span
                       className={cn(
                         "text-xs",
-                        product.inStock
+                        product.stock && product.stock > 0
                           ? "text-emerald-400"
                           : "text-foreground/70"
                       )}
                     >
-                      {product.inStock ? "In stock" : "Out of stock"}
+                      {product.stock && product.stock > 0
+                        ? "In stock"
+                        : "Out of stock"}
                     </span>
                   </div>
-
-                  {product.tags?.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {product.tags.map((t) => (
-                        <Badge
-                          key={t}
-                          variant="secondary"
-                          className="bg-secondary/60 text-secondary-foreground/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
-                        >
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : null}
                 </CardContent>
 
                 <CardFooter className="flex items-center justify-between gap-3 p-4 sm:p-6">
@@ -356,14 +339,20 @@ export default function ProductDetailPage() {
                     variant="secondary"
                     className="bg-secondary/80 text-secondary-foreground backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
                   >
-                    <Link href={`/categories/${category.slug}`}>
-                      Back to {category.title}
+                    <Link href={`/categories/${categoryId}`}>
+                      <ArrowLeft className="mr-2 size-4" />
+                      Back to {category?.title || "Category"}
                     </Link>
                   </Button>
                   <Button
-                    disabled={!product.inStock}
+                    disabled={!product.stock || product.stock === 0}
                     className="bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
+                    onClick={() => {
+                      // TODO: Add to cart logic
+                      console.log("Add to cart:", product.id);
+                    }}
                   >
+                    <ShoppingCart className="mr-2 size-4" />
                     Add to cart
                   </Button>
                 </CardFooter>
@@ -385,31 +374,38 @@ export default function ProductDetailPage() {
                     <div>
                       <h3 className="mb-2 text-sm font-medium">Key details</h3>
                       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                        <li>Category: {category.title}</li>
-                        <li>Delivery: Instant for most items after purchase</li>
-                        <li>Refunds: See refund policy for eligibility</li>
+                        <li>Category: {category?.title || "Unknown"}</li>
+                        <li>Stock: {product.stock || 0} available</li>
+                        <li>Price: {formatCents(product.price)}</li>
+                        <li>
+                          Status: {product.isActive ? "Active" : "Inactive"}
+                        </li>
                       </ul>
                     </div>
                     <div>
-                      <h3 className="mb-2 text-sm font-medium">Tips</h3>
+                      <h3 className="mb-2 text-sm font-medium">
+                        Purchase info
+                      </h3>
                       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                        <li>Ensure your Minecraft username is correct</li>
+                        <li>Delivery: Instant for most items after purchase</li>
+                        <li>Refunds: See refund policy for eligibility</li>
                         <li>
-                          Relog if delivery doesn’t arrive within a few minutes
+                          Support: Contact us with your order ID if needed
                         </li>
-                        <li>Contact support with your order ID if needed</li>
                       </ul>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Optional: Related items from the same category */}
+              {/* Related products */}
               <div className="mt-6">
-                <RelatedFromCategory
-                  category={category}
-                  currentId={product.id}
-                  currentSlug={product.slug || product.id}
+                <RelatedProducts
+                  products={relatedProductsData?.data || []}
+                  currentProductId={product.id}
+                  categoryId={categoryId}
+                  categoryTitle={category?.title || "Category"}
+                  isLoading={relatedLoading}
                 />
               </div>
             </div>
@@ -420,35 +416,73 @@ export default function ProductDetailPage() {
   );
 }
 
-function RelatedFromCategory({
-  category,
-  currentId,
-  currentSlug,
+function RelatedProducts({
+  products,
+  currentProductId,
+  categoryId,
+  categoryTitle,
+  isLoading,
 }: {
-  category: NonNullable<ReturnType<typeof getCategoryBySlug>>;
-  currentId: string;
-  currentSlug: string;
+  products: any[];
+  currentProductId: number;
+  categoryId: number;
+  categoryTitle: string;
+  isLoading: boolean;
 }) {
-  const products: Product[] = React.useMemo(() => {
-    const fromSections = category.sections?.flatMap((s) => s.products) ?? [];
-    const flat = category.products ?? [];
-    const all = [...fromSections, ...flat];
-    return all.filter((p) => p.id !== currentId).slice(0, 6);
-  }, [category, currentId]);
+  // Filter out current product and limit to 6
+  const relatedProducts = products
+    .filter((p) => p.id !== currentProductId)
+    .slice(0, 6);
 
-  if (!products.length) return null;
+  if (isLoading) {
+    return (
+      <div>
+        <h3 className="mb-4 text-base font-semibold">
+          More in {categoryTitle}
+        </h3>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-[340px] animate-pulse rounded-lg bg-muted/20"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (relatedProducts.length === 0) {
+    return (
+      <div>
+        <h3 className="mb-4 text-base font-semibold">
+          More in {categoryTitle}
+        </h3>
+        <div className="rounded-lg border border-border/60 bg-muted/20 p-8 text-center">
+          <p className="text-muted-foreground">
+            No other products found in this category.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h3 className="mb-4 text-base font-semibold">More in {category.title}</h3>
+      <h3 className="mb-4 text-base font-semibold">More in {categoryTitle}</h3>
       <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {products.map((p, idx) => (
-          <li key={p.id}>
+        {relatedProducts.map((product, idx) => (
+          <li key={product.id}>
             <Card className="group relative h-[340px] overflow-hidden border-border/60 bg-card/70 transition-all duration-300 hover:shadow-lg">
+              <Link
+                href={`/categories/${categoryId}/${product.id}`}
+                className="absolute inset-0 z-[1]"
+              />
+
               <div className="absolute inset-0">
                 <Image
-                  src={p.image || "/placeholder.svg"}
-                  alt={p.name}
+                  src={product.image || "/placeholder.svg"}
+                  alt={product.name}
                   fill
                   sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
@@ -456,50 +490,61 @@ function RelatedFromCategory({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/30 to-background/10" />
               </div>
+
               <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
                 <div className="flex flex-wrap gap-2">
-                  {p.tags.slice(0, 2).map((t) => (
+                  {product.category && (
                     <Badge
-                      key={t}
                       variant="secondary"
                       className="bg-secondary/50 text-secondary-foreground backdrop-blur"
                     >
-                      {t}
+                      {product.category.title}
                     </Badge>
-                  ))}
+                  )}
                 </div>
-                {!p.inStock && (
+                {!product.stock || product.stock === 0 ? (
                   <Badge className="bg-muted text-muted-foreground backdrop-blur">
                     Out of stock
                   </Badge>
-                )}
+                ) : product.stock < 10 ? (
+                  <Badge className="bg-orange-500/80 text-white backdrop-blur">
+                    Low stock
+                  </Badge>
+                ) : null}
               </div>
+
               <div className="absolute inset-x-4 bottom-4 z-10">
                 <div className="rounded-lg border border-border/60 bg-background/60 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/40">
                   <div className="mb-1 flex items-center justify-between">
                     <CardTitle className="line-clamp-1 text-lg">
-                      {p.name}
+                      {product.name}
                     </CardTitle>
                     <div className="text-base font-semibold">
-                      {formatCents(p.price)}
+                      {formatCents(product.price)}
                     </div>
                   </div>
                   <p className="line-clamp-2 text-sm text-muted-foreground">
-                    {p.description}
+                    {product.description}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <StarRating rating={p.rating} />
-                      <span className="text-xs text-muted-foreground">
-                        {p.rating.toFixed(1)}
-                      </span>
+                      {product.stock && (
+                        <span className="text-xs text-muted-foreground">
+                          {product.stock} in stock
+                        </span>
+                      )}
                     </div>
-                    <Button asChild size="sm" variant="secondary">
-                      <Link
-                        href={`/categories/${category.slug}/${p.slug ?? p.id}`}
-                      >
-                        View
-                      </Link>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Navigate to product
+                        window.location.href = `/categories/${categoryId}/${product.id}`;
+                      }}
+                    >
+                      View
                     </Button>
                   </div>
                 </div>

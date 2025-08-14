@@ -10,7 +10,7 @@ import { z } from "zod";
 // List all categories with product count
 export const listCategories = os.handler(async () => {
   try {
-    console.log("listCategories handler called");
+   
     const result = await db
       .select({
         id: categories.id,
@@ -36,7 +36,6 @@ export const listCategories = os.handler(async () => {
         categories.updatedAt
       )
       .orderBy(desc(categories.createdAt));
-    console.log("Categories result:", result);
     return result;
   } catch (err) {
     console.error("Error in listCategories:", err);

@@ -60,6 +60,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/utils/orpc";
 import { SiteHeader } from "@/components/sidebar/site-header";
+import { ImageUpload } from "@/components/image-upload";
+import { Switch } from "@/components/ui/switch";
 
 // Types
 type Category = {
@@ -632,7 +634,7 @@ export default function CategoriesProductsDashboard() {
 
             {/* OVERVIEW TAB */}
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatCard
                   title="Total Categories"
                   value={stats.totalCategories}
@@ -647,11 +649,6 @@ export default function CategoriesProductsDashboard() {
                   title="Active Products"
                   value={stats.activeProducts}
                   icon={Eye}
-                />
-                <StatCard
-                  title="Inventory Value"
-                  value={`$${stats.totalValue.toFixed(2)}`}
-                  icon={DollarSign}
                 />
               </div>
 
@@ -813,8 +810,8 @@ export default function CategoriesProductsDashboard() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="image">Image URL</Label>
-                        <Input
+                        <Label htmlFor="image">Image</Label>
+                        {/* <Input
                           id="image"
                           value={categoryForm.image}
                           onChange={(e) =>
@@ -824,10 +821,11 @@ export default function CategoriesProductsDashboard() {
                             })
                           }
                           placeholder="https://example.com/image.jpg"
-                        />
+                        /> */}
+                        <ImageUpload />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="badge">Badge (Optional)</Label>
+                        <Label htmlFor="badge">Badge</Label>
                         <Input
                           id="badge"
                           value={categoryForm.badge}
@@ -840,7 +838,7 @@ export default function CategoriesProductsDashboard() {
                           placeholder="New, Popular, etc."
                         />
                       </div>
-                      <div className="grid gap-2">
+                      {/* <div className="grid gap-2">
                         <Label htmlFor="href">Link (Optional)</Label>
                         <Input
                           id="href"
@@ -853,7 +851,7 @@ export default function CategoriesProductsDashboard() {
                           }
                           placeholder="/categories/electronics"
                         />
-                      </div>
+                      </div> */}
                     </div>
                     <DialogFooter>
                       <Button
@@ -989,7 +987,7 @@ export default function CategoriesProductsDashboard() {
                       Add Product
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90vh]">
                     <DialogHeader>
                       <DialogTitle>
                         {editingProduct ? "Edit Product" : "Add Product"}
@@ -997,60 +995,171 @@ export default function CategoriesProductsDashboard() {
                       <DialogDescription>
                         {editingProduct
                           ? "Update the product details below."
-                          : "Create a new product for your inventory."}
+                          : "Fill in the details to create a new product."}
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
-                      <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                          id="name"
-                          value={productForm.name}
-                          onChange={(e) =>
-                            setProductForm({
-                              ...productForm,
-                              name: e.target.value,
-                            })
-                          }
-                          placeholder="Product name"
-                        />
+
+                    {/* Scrollable content */}
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-6 py-4">
+                      {/* BASIC INFO */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+                          Basic Information
+                        </h4>
+                        <div className="grid gap-2">
+                          <Label htmlFor="name">Name</Label>
+                          <Input
+                            id="name"
+                            value={productForm.name}
+                            onChange={(e) =>
+                              setProductForm({
+                                ...productForm,
+                                name: e.target.value,
+                              })
+                            }
+                            placeholder="Product name"
+                          />
+                        </div>
+                        <div className="grid gap-2 mt-3">
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            value={productForm.description}
+                            onChange={(e) =>
+                              setProductForm({
+                                ...productForm,
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Product description"
+                          />
+                        </div>
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                          id="description"
-                          value={productForm.description}
-                          onChange={(e) =>
-                            setProductForm({
-                              ...productForm,
-                              description: e.target.value,
-                            })
-                          }
-                          placeholder="Product description"
-                        />
+
+                      {/* PRICING & STOCK */}
+                      <div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="price">Price</Label>
+                            <div className="relative">
+                              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                                $
+                              </span>
+                              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                                USD
+                              </span>
+                              <Input
+                                id="price"
+                                type="number"
+                                inputMode="decimal"
+                                step="0.01"
+                                min={0}
+                                className="pl-8 pr-10"
+                                value={(productForm.price / 100).toFixed(2)}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw.trim() === "") {
+                                    setProductForm({
+                                      ...productForm,
+                                      price: 0,
+                                    });
+                                    return;
+                                  }
+                                  const num = Number.parseFloat(raw);
+                                  const clamped = Number.isFinite(num)
+                                    ? Math.max(0, num)
+                                    : 0;
+                                  setProductForm({
+                                    ...productForm,
+                                    price: Math.round(clamped * 100),
+                                  });
+                                }}
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+                          {/* <div className="grid gap-2">
+                            <Label htmlFor="stock">Stock</Label>
+                            <Input
+                              id="stock"
+                              type="number"
+                              value={productForm.stock}
+                              onChange={(e) =>
+                                setProductForm({
+                                  ...productForm,
+                                  stock: parseInt(e.target.value) || 0,
+                                })
+                              }
+                              placeholder="0"
+                            />
+                            {productForm.stock > 0 ? (
+                              <Badge variant="default">In Stock</Badge>
+                            ) : (
+                              <Badge variant="destructive">Out of Stock</Badge>
+                            )}
+                          </div> */}
+                        </div>
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="price">Price ($)</Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          step="0.01"
-                          value={productForm.price / 100}
-                          onChange={(e) =>
-                            setProductForm({
-                              ...productForm,
-                              price: Math.round(
-                                parseFloat(e.target.value || "0") * 100
-                              ),
-                            })
-                          }
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="categoryId">Category</Label>
+
+                      {/* <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+                          Stock Management
+                        </h4>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="enableStock">
+                            Enable Stock Tracking
+                          </Label>
+                          <Switch
+                            id="enableStock"
+                            checked={productForm.stock !== null}
+                            onCheckedChange={(checked) =>
+                              setProductForm({
+                                ...productForm,
+                                stock: checked ? 0 : null,
+                              })
+                            }
+                          />
+                        </div>
+
+                        {productForm.stock !== null && (
+                          <div className="grid gap-2 mt-3">
+                            <Label htmlFor="stock">Stock Quantity</Label>
+                            <Input
+                              id="stock"
+                              type="number"
+                              min={0} // ✅ HTML-level restriction
+                              value={productForm.stock ?? 0}
+                              onChange={(e) =>
+                                setProductForm({
+                                  ...productForm,
+                                  stock: Math.max(
+                                    0,
+                                    parseInt(e.target.value) || 0
+                                  ), // ✅ JS-level restriction
+                                })
+                              }
+                              placeholder="0"
+                            />
+                            {productForm.stock > 0 ? (
+                              <Badge variant="default">In Stock</Badge>
+                            ) : (
+                              <Badge variant="destructive">Out of Stock</Badge>
+                            )}
+                          </div>
+                        )}
+                      </div> */}
+
+                      {/* CATEGORY */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+                          Category
+                        </h4>
                         <Select
-                          value={productForm.categoryId.toString()}
+                          value={
+                            productForm.categoryId
+                              ? productForm.categoryId.toString()
+                              : undefined
+                          }
                           onValueChange={(value) =>
                             setProductForm({
                               ...productForm,
@@ -1072,36 +1181,44 @@ export default function CategoriesProductsDashboard() {
                             ))}
                           </SelectContent>
                         </Select>
+
+                        {categories?.length === 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => {
+                              setProductDialogOpen(false);
+                              setActiveTab("categories");
+                              setCategoryDialogOpen(true);
+                            }}
+                          >
+                            <Plus className="size-3 mr-1" /> Create Category
+                          </Button>
+                        )}
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="stock">Stock</Label>
-                        <Input
-                          id="stock"
-                          type="number"
-                          value={productForm.stock}
-                          onChange={(e) =>
-                            setProductForm({
-                              ...productForm,
-                              stock: parseInt(e.target.value) || 0,
-                            })
-                          }
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="image">Image URL (Optional)</Label>
-                        <Input
-                          id="image"
+
+                      {/* IMAGE UPLOAD */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+                          Product Image
+                        </h4>
+                        <ImageUpload
                           value={productForm.image}
-                          onChange={(e) =>
-                            setProductForm({
-                              ...productForm,
-                              image: e.target.value,
-                            })
+                          onChange={(url) =>
+                            setProductForm({ ...productForm, image: url })
                           }
-                          placeholder="https://example.com/image.jpg"
                         />
+                        {productForm.image && (
+                          <img
+                            src={productForm.image}
+                            alt="Preview"
+                            className="mt-2 w-full h-32 object-cover rounded"
+                          />
+                        )}
                       </div>
+
+                      {/* STATUS */}
                       <div className="flex items-center space-x-2">
                         <input
                           type="checkbox"
@@ -1117,7 +1234,9 @@ export default function CategoriesProductsDashboard() {
                         <Label htmlFor="isActive">Active</Label>
                       </div>
                     </div>
-                    <DialogFooter>
+
+                    {/* Sticky footer */}
+                    <DialogFooter className="border-t pt-3 bg-background sticky bottom-0">
                       <Button
                         type="submit"
                         onClick={handleProductSubmit}
@@ -1130,7 +1249,7 @@ export default function CategoriesProductsDashboard() {
                           updateProductMutation.isPending) && (
                           <Loader2 className="size-4 mr-2 animate-spin" />
                         )}
-                        {editingProduct ? "Update" : "Create"}
+                        {editingProduct ? "Update Product" : "Create Product"}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
