@@ -1203,12 +1203,7 @@ export default function CategoriesProductsDashboard() {
                         <h4 className="text-sm font-semibold text-muted-foreground mb-2">
                           Product Image
                         </h4>
-                        <ImageUpload
-                          value={productForm.image}
-                          onChange={(url) =>
-                            setProductForm({ ...productForm, image: url })
-                          }
-                        />
+                        <ImageUpload />
                         {productForm.image && (
                           <img
                             src={productForm.image}
