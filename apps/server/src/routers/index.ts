@@ -8,7 +8,7 @@ import { heroConfigRoute } from "../lib/adminProcedures/heroConfig";
 import { featuresConfigRoute } from "../lib/adminProcedures/feturesConfig";
 import { categoriesRoute } from "../lib/adminProcedures/categories";
 import { productsRoute } from "../lib/adminProcedures/products";
-import { imagesRoute } from "@/lib/proccedures/cloudinary";
+import { imagesRoute } from "../lib/proccedures/cloudinary";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
