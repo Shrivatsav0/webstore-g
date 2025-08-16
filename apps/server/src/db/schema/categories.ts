@@ -26,7 +26,7 @@ export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description").notNull(),
-  price: integer("price").notNull(), // Store price in cents
+  price: integer("price").notNull(),
   image: varchar("image", { length: 500 }),
   categoryId: integer("category_id")
     .references(() => categories.id)

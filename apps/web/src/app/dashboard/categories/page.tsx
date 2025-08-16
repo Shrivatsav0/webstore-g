@@ -811,18 +811,22 @@ export default function CategoriesProductsDashboard() {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="image">Image</Label>
-                        {/* <Input
-                          id="image"
+                        <ImageUpload
                           value={categoryForm.image}
-                          onChange={(e) =>
+                          onChange={(url) =>
                             setCategoryForm({
                               ...categoryForm,
-                              image: e.target.value,
+                              image: url,
                             })
                           }
-                          placeholder="https://example.com/image.jpg"
-                        /> */}
-                        <ImageUpload />
+                          onRemove={() =>
+                            setCategoryForm({
+                              ...categoryForm,
+                              image: "",
+                            })
+                          }
+                          folder="categories"
+                        />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="badge">Badge</Label>
@@ -1203,14 +1207,22 @@ export default function CategoriesProductsDashboard() {
                         <h4 className="text-sm font-semibold text-muted-foreground mb-2">
                           Product Image
                         </h4>
-                        <ImageUpload />
-                        {productForm.image && (
-                          <img
-                            src={productForm.image}
-                            alt="Preview"
-                            className="mt-2 w-full h-32 object-cover rounded"
-                          />
-                        )}
+                        <ImageUpload
+                          value={productForm.image}
+                          onChange={(url) =>
+                            setProductForm({
+                              ...productForm,
+                              image: url,
+                            })
+                          }
+                          onRemove={() =>
+                            setProductForm({
+                              ...productForm,
+                              image: "",
+                            })
+                          }
+                          folder="products"
+                        />
                       </div>
 
                       {/* STATUS */}

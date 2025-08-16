@@ -19,8 +19,12 @@
   },
   "dependencies": {
     "@tabler/icons-react": "^3.34.1",
+    "@types/multer": "^2.0.0",
+    "cloudinary": "^2.7.0",
     "icons-react": "^3.7.1",
-    "lucide-react": "^0.536.0"
+    "install": "^0.13.0",
+    "lucide-react": "^0.536.0",
+    "next-cloudinary": "^6.16.0"
   },
   "devDependencies": {
     "turbo": "^2.5.4"
