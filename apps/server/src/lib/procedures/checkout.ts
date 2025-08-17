@@ -102,6 +102,19 @@ export const createCheckoutSession = os
               .map((item) => `${item.quantity}x ${item.product.name}`)
               .join(", ");
 
+      // Calculate the redirect URL - use WEB_APP_URL for frontend redirects
+      const webAppUrl =
+        process.env.NEXT_PUBLIC_APP_WEB_URL ||
+        "https://test-2-web.vercel.app";
+      const redirectUrl =
+        input.redirectUrl || `${webAppUrl}/checkout/success?order=${order.id}`;
+
+      console.log("=== REDIRECT URL DEBUG ===");
+      console.log("WEB_APP_URL:", process.env.NEXT_PUBLIC_APP_WEB_URL);
+      console.log("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL);
+      console.log("Order ID:", order.id);
+      console.log("Input redirect URL:", input.redirectUrl);
+      console.log("Final redirect URL:", redirectUrl);
       // Get the first product image or use a default
       const productImage =
         items.find((item) => item.product.image)?.product.image || null;
@@ -130,6 +143,51 @@ export const createCheckoutSession = os
         checkoutData.name = input.customerName;
       }
 
+      const checkoutPayload = {
+        data: {
+          type: "checkouts",
+          attributes: {
+            custom_price: subtotal, // Price in cents
+            product_options: {
+              name: productName,
+              description: productDescription,
+              media: productImage ? [productImage] : [],
+              redirect_url: redirectUrl, // Use the calculated URL
+              receipt_button_text: "View Order",
+              receipt_thank_you_note: "Thank you for your purchase!",
+            },
+            checkout_options: {
+              embed: true, // Enable overlay
+              media: true, // Show product image
+              logo: true, // Show store logo
+              desc: true, // Show description
+              discount: true, // Show discount field
+              button_color: "#7047EB", // Custom button color
+            },
+            checkout_data: checkoutData,
+            test_mode: process.env.NODE_ENV !== "production",
+          },
+          relationships: {
+            store: {
+              data: {
+                type: "stores",
+                id: process.env.LEMONSQUEEZY_STORE_ID!,
+              },
+            },
+            variant: {
+              data: {
+                type: "variants",
+                id: process.env.LEMONSQUEEZY_GENERIC_VARIANT_ID!,
+              },
+            },
+          },
+        },
+      };
+
+      console.log("=== LEMONSQUEEZY PAYLOAD ===");
+      console.log("Full payload:", JSON.stringify(checkoutPayload, null, 2));
+      console.log("============================");
+
       // Create checkout using LemonSqueezy API
       const response = await fetch(
         "https://api.lemonsqueezy.com/v1/checkouts",
@@ -140,48 +198,7 @@ export const createCheckoutSession = os
             "Content-Type": "application/vnd.api+json",
             Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_KEY}`,
           },
-          body: JSON.stringify({
-            data: {
-              type: "checkouts",
-              attributes: {
-                custom_price: subtotal, // Price in cents
-                product_options: {
-                  name: productName,
-                  description: productDescription,
-                  media: productImage ? [productImage] : [],
-                  redirect_url:
-                    input.redirectUrl ||
-                    `${process.env.NEXT_PUBLIC_APP_WEB_URL}/checkout/success?order=${order.id}`,
-                  receipt_button_text: "View Order",
-                  receipt_thank_you_note: "Thank you for your purchase!",
-                },
-                checkout_options: {
-                  embed: true, // Enable overlay
-                  media: true, // Show product image
-                  logo: true, // Show store logo
-                  desc: true, // Show description
-                  discount: true, // Show discount field
-                  button_color: "#7047EB", // Custom button color
-                },
-                checkout_data: checkoutData,
-                test_mode: process.env.NODE_ENV !== "production",
-              },
-              relationships: {
-                store: {
-                  data: {
-                    type: "stores",
-                    id: process.env.LEMONSQUEEZY_STORE_ID!,
-                  },
-                },
-                variant: {
-                  data: {
-                    type: "variants",
-                    id: process.env.LEMONSQUEEZY_GENERIC_VARIANT_ID!,
-                  },
-                },
-              },
-            },
-          }),
+          body: JSON.stringify(checkoutPayload),
         }
       );
 
@@ -194,6 +211,10 @@ export const createCheckoutSession = os
       }
 
       const checkout = await response.json();
+
+      console.log("=== LEMONSQUEEZY RESPONSE ===");
+      console.log("Checkout response:", JSON.stringify(checkout, null, 2));
+      console.log("============================");
 
       if (!checkout.data?.attributes?.url) {
         throw new Error("No checkout URL returned from LemonSqueezy");
