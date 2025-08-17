@@ -219,21 +219,60 @@ export const createCheckoutSession = os
     }
   });
 
-// Get order details
+// Get order details - Made explicit to fix TypeScript issues
 export const getOrder = os
   .input(z.object({ orderId: z.number() }))
   .handler(async ({ input }) => {
     try {
+      console.log("Getting order with ID:", input.orderId);
+
       const order = await db
-        .select()
+        .select({
+          id: orders.id,
+          lemonSqueezyOrderId: orders.lemonSqueezyOrderId,
+          lemonSqueezyCheckoutId: orders.lemonSqueezyCheckoutId,
+          userId: orders.userId,
+          sessionId: orders.sessionId,
+          customerEmail: orders.customerEmail,
+          customerName: orders.customerName,
+          status: orders.status, // Explicitly select status field
+          currency: orders.currency,
+          subtotal: orders.subtotal,
+          tax: orders.tax,
+          total: orders.total,
+          checkoutUrl: orders.checkoutUrl,
+          receiptUrl: orders.receiptUrl,
+          refunded: orders.refunded,
+          refundedAt: orders.refundedAt,
+          testMode: orders.testMode,
+          createdAt: orders.createdAt,
+          updatedAt: orders.updatedAt,
+        })
         .from(orders)
         .where(eq(orders.id, input.orderId))
         .limit(1)
         .then((rows) => rows[0]);
 
+      console.log("Found order:", order ? "Yes" : "No");
+
       if (!order) {
+        console.log("Order not found for ID:", input.orderId);
+
+        // Check if any orders exist at all for debugging
+        const allOrders = await db
+          .select({
+            id: orders.id,
+            status: orders.status,
+            createdAt: orders.createdAt,
+          })
+          .from(orders)
+          .limit(10);
+
+        console.log("All orders in database:", allOrders);
         throw new Error("Order not found");
       }
+
+      console.log("Order status:", order.status);
 
       const items = await db
         .select({
@@ -246,6 +285,8 @@ export const getOrder = os
         })
         .from(orderItems)
         .where(eq(orderItems.orderId, order.id));
+
+      console.log("Order items count:", items.length);
 
       return {
         ...order,
