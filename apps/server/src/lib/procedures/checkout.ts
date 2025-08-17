@@ -151,7 +151,7 @@ export const createCheckoutSession = os
                   media: productImage ? [productImage] : [],
                   redirect_url:
                     input.redirectUrl ||
-                    `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?order=${order.id}`,
+                    `${process.env.NEXT_PUBLIC_APP_WEB_URL}/checkout/success?order=${order.id}`,
                   receipt_button_text: "View Order",
                   receipt_thank_you_note: "Thank you for your purchase!",
                 },
