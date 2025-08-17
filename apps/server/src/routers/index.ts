@@ -8,7 +8,9 @@ import { heroConfigRoute } from "../lib/adminProcedures/heroConfig";
 import { featuresConfigRoute } from "../lib/adminProcedures/feturesConfig";
 import { categoriesRoute } from "../lib/adminProcedures/categories";
 import { productsRoute } from "../lib/adminProcedures/products";
-import { imagesRoute } from "../lib/proccedures/cloudinary";
+import { imagesRoute } from "../lib/procedures/cloudinary";
+import { cartRoute } from "../lib/procedures/cart";
+import { checkoutRoute } from "../lib/procedures/checkout";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -30,6 +32,8 @@ export const appRouter = {
   categories: categoriesRoute,
   products: productsRoute,
   images: imagesRoute,
+  cart: cartRoute,
+  checkout: checkoutRoute,
   adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),

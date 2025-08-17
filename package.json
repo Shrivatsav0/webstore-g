@@ -18,13 +18,16 @@
     "db:migrate": "turbo -F server db:migrate"
   },
   "dependencies": {
+    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
     "@tabler/icons-react": "^3.34.1",
     "@types/multer": "^2.0.0",
     "cloudinary": "^2.7.0",
+    "crypto": "^1.0.1",
     "icons-react": "^3.7.1",
     "install": "^0.13.0",
     "lucide-react": "^0.536.0",
-    "next-cloudinary": "^6.16.0"
+    "next-cloudinary": "^6.16.0",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

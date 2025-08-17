@@ -5,6 +5,7 @@ import UserMenu from "./user-menu";
 import ModeToggle from "./mode-toggle";
 import { ShoppingBag } from "lucide-react";
 import { links } from "../../../../data/data";
+import { CartButton } from "./cart/cart-btn";
 export function Header() {
   return (
     <header className="bg-background sticky top-0 z-50">
@@ -33,6 +34,7 @@ export function Header() {
             </nav>
             <ModeToggle />
             <UserMenu />
+            <CartButton />
           </div>
         </div>
       </div>

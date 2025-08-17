@@ -1,3 +1,5 @@
+//app/categories/[slug]/[productSlug]
+
 "use client";
 
 import * as React from "react";
@@ -25,6 +27,7 @@ import {
   ShoppingCart,
   ArrowLeft,
 } from "lucide-react";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 
 function formatCents(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -344,17 +347,11 @@ export default function ProductDetailPage() {
                       Back to {category?.title || "Category"}
                     </Link>
                   </Button>
-                  <Button
+                  <AddToCartButton
+                    productId={product.id}
                     disabled={!product.stock || product.stock === 0}
-                    className="bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur supports-[backdrop-filter]:backdrop-blur-md"
-                    onClick={() => {
-                      // TODO: Add to cart logic
-                      console.log("Add to cart:", product.id);
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 size-4" />
-                    Add to cart
-                  </Button>
+                    className="relative z-20"
+                  />
                 </CardFooter>
               </Card>
             </div>

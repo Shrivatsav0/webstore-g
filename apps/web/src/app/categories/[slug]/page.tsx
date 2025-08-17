@@ -1,3 +1,5 @@
+//apps/categories/[slug]
+
 "use client";
 
 import * as React from "react";
