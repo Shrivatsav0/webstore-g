@@ -102,27 +102,45 @@ export const createCheckoutSession = os
               .map((item) => `${item.quantity}x ${item.product.name}`)
               .join(", ");
 
-      // Calculate the redirect URL - use WEB_APP_URL for frontend redirects
+      // Fix: Calculate the redirect URL with query parameters properly encoded
       const webAppUrl =
         process.env.NEXT_PUBLIC_APP_WEB_URL ||
+        process.env.WEB_APP_URL ||
         "https://test-2-web.vercel.app";
-      const redirectUrl =
-        input.redirectUrl || `${webAppUrl}/checkout/success?order=${order.id}`;
+
+      // SOLUTION 1: Include order ID and session ID in the redirect URL
+      const baseRedirectUrl =
+        input.redirectUrl || `${webAppUrl}/checkout/success`;
+      const urlObj = new URL(baseRedirectUrl);
+      urlObj.searchParams.set("order", order.id.toString());
+      urlObj.searchParams.set("session", input.sessionId);
+      if (input.userId) {
+        urlObj.searchParams.set("user", input.userId);
+      }
+      const redirectUrl = urlObj.toString();
 
       console.log("=== REDIRECT URL DEBUG ===");
-      console.log("WEB_APP_URL:", process.env.NEXT_PUBLIC_APP_WEB_URL);
+      console.log("WEB_APP_URL:", process.env.WEB_APP_URL);
+      console.log(
+        "NEXT_PUBLIC_APP_WEB_URL:",
+        process.env.NEXT_PUBLIC_APP_WEB_URL
+      );
       console.log("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL);
       console.log("Order ID:", order.id);
       console.log("Input redirect URL:", input.redirectUrl);
+      console.log("Base redirect URL:", baseRedirectUrl);
       console.log("Final redirect URL:", redirectUrl);
+      console.log("============================");
+
       // Get the first product image or use a default
       const productImage =
         items.find((item) => item.product.image)?.product.image || null;
 
-      // Prepare custom data - only include non-empty strings
+      // SOLUTION 2: Store critical info in custom data for webhooks
       const customData: Record<string, string> = {
         order_id: order.id.toString(),
         session_id: input.sessionId,
+        redirect_order_id: order.id.toString(), // Duplicate for safety
       };
 
       // Only add user_id if it exists and is not empty
@@ -152,8 +170,9 @@ export const createCheckoutSession = os
               name: productName,
               description: productDescription,
               media: productImage ? [productImage] : [],
-              redirect_url: redirectUrl, // Use the calculated URL
+              redirect_url: redirectUrl, // Now includes query parameters
               receipt_button_text: "View Order",
+              receipt_link_url: redirectUrl, // SOLUTION 3: Also set receipt link
               receipt_thank_you_note: "Thank you for your purchase!",
             },
             checkout_options: {
@@ -240,6 +259,67 @@ export const createCheckoutSession = os
     }
   });
 
+// SOLUTION 4: Add a new procedure to get order by session ID as fallback
+export const getOrderBySession = os
+  .input(z.object({ sessionId: z.string() }))
+  .handler(async ({ input }) => {
+    try {
+      console.log("Getting order by session ID:", input.sessionId);
+
+      const order = await db
+        .select({
+          id: orders.id,
+          lemonSqueezyOrderId: orders.lemonSqueezyOrderId,
+          lemonSqueezyCheckoutId: orders.lemonSqueezyCheckoutId,
+          userId: orders.userId,
+          sessionId: orders.sessionId,
+          customerEmail: orders.customerEmail,
+          customerName: orders.customerName,
+          status: orders.status,
+          currency: orders.currency,
+          subtotal: orders.subtotal,
+          tax: orders.tax,
+          total: orders.total,
+          checkoutUrl: orders.checkoutUrl,
+          receiptUrl: orders.receiptUrl,
+          refunded: orders.refunded,
+          refundedAt: orders.refundedAt,
+          testMode: orders.testMode,
+          createdAt: orders.createdAt,
+          updatedAt: orders.updatedAt,
+        })
+        .from(orders)
+        .where(eq(orders.sessionId, input.sessionId))
+        .orderBy(orders.createdAt) // Get the most recent order for this session
+        .limit(1)
+        .then((rows) => rows[0]);
+
+      if (!order) {
+        throw new Error("Order not found for session");
+      }
+
+      const items = await db
+        .select({
+          id: orderItems.id,
+          productId: orderItems.productId,
+          productName: orderItems.productName,
+          quantity: orderItems.quantity,
+          price: orderItems.price,
+          total: orderItems.total,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, order.id));
+
+      return {
+        ...order,
+        items,
+      };
+    } catch (err) {
+      console.error("Error in getOrderBySession:", err);
+      throw err;
+    }
+  });
+
 // Get order details - Made explicit to fix TypeScript issues
 export const getOrder = os
   .input(z.object({ orderId: z.number() }))
@@ -322,4 +402,5 @@ export const getOrder = os
 export const checkoutRoute = {
   create: createCheckoutSession,
   getOrder,
+  getOrderBySession, // Add the new method
 };
