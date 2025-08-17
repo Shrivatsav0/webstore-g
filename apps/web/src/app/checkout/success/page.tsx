@@ -1,6 +1,6 @@
 // apps/web/app/checkout/success/page.tsx
 import { Suspense } from "react";
-import { CheckoutSuccessContent } from "./CheckoutSuccessContent";
+import { CheckoutSuccessContent } from "./checkout-success-content";
 import { Loader2 } from "lucide-react";
 
 export default function CheckoutSuccessPage() {
