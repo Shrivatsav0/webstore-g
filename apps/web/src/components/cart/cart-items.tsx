@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { MinecraftUserDisplay } from "@/components/checkout/minecraft-user-display";
 import { useMinecraftUser } from "@/hooks/use-minecraft-user";
 import { cn } from "@/lib/utils";
+import { MinecraftAvatarButton } from "../minecraft/mc-head";
 
 export function CartItems() {
   const { sessionId, items, total, setCart, generateSessionId, clearCart } =
@@ -87,7 +88,7 @@ export function CartItems() {
     })
   );
 
-  // Server-side clear cart
+  // Server-side clear cart with order verification
   const clearServerCartMutation = useMutation(
     orpc.cart.clear.mutationOptions({
       onSuccess: () => {
@@ -98,21 +99,43 @@ export function CartItems() {
     })
   );
 
-  // Checkout mutation
-  const checkoutMutation = useMutation(
-    orpc.checkout.create.mutationOptions({
-      onSuccess: (data: { checkoutUrl: string; orderId: number }) => {
-        // Option A — Optimistic clear locally before redirect
-        clearCart();
+  // New: Clear cart after order completion
+  const clearCartAfterOrderMutation = useMutation(
+    orpc.cart.clearAfterOrder.mutationOptions({
+      onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: orpc.cart.get.queryKey({ input: { sessionId } }),
         });
+      },
+    })
+  );
 
-        // Optional: mark optimistic clear for debugging/reconciliation
+  // Checkout mutation - only creates checkout session, preserves cart until completion
+  const checkoutMutation = useMutation(
+    orpc.checkout.create.mutationOptions({
+      onSuccess: (data: { checkoutUrl: string; orderId: number }) => {
+        // Store checkout info for later verification, but keep cart intact
         try {
-          sessionStorage.setItem("checkout:optimistic-cleared", "1");
-        } catch {}
+          sessionStorage.setItem(
+            "checkout:pending",
+            JSON.stringify({
+              sessionId,
+              orderId: data.orderId,
+              timestamp: Date.now(),
+              cartSnapshot: {
+                items: items.map((item) => ({
+                  id: item.id,
+                  quantity: item.quantity,
+                })),
+                total: total,
+              },
+            })
+          );
+        } catch (e) {
+          console.warn("Could not save checkout state to sessionStorage", e);
+        }
 
+        // Redirect immediately - don't touch cart state
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         }
@@ -122,6 +145,150 @@ export function CartItems() {
       },
     })
   );
+
+  // Only clear cart after CONFIRMED order completion with proper verification
+  React.useEffect(() => {
+    if (typeof window === "undefined" || !sessionId) return;
+
+    const url = new URL(window.location.href);
+    const isSuccessPage = url.pathname.startsWith("/checkout/success");
+
+    if (!isSuccessPage) return;
+
+    // Add delay to ensure order processing is complete before clearing cart
+    const clearCartAfterDelay = setTimeout(async () => {
+      try {
+        console.log("On success page, verifying order completion...");
+
+        // Get URL parameters for verification
+        const searchParams = url.searchParams;
+        const paymentIntent = searchParams.get("payment_intent");
+        const sessionIdParam = searchParams.get("session_id");
+        const orderIdParam = searchParams.get("order_id");
+
+        // Get pending checkout data
+        let pendingCheckout = null;
+        try {
+          const pending = sessionStorage.getItem("checkout:pending");
+          if (pending) {
+            pendingCheckout = JSON.parse(pending);
+          }
+        } catch (e) {
+          console.warn(
+            "Could not parse pending checkout from sessionStorage",
+            e
+          );
+        }
+
+        // Verify this is a legitimate successful order
+        const hasValidSuccessIndicators = Boolean(
+          paymentIntent || sessionIdParam || orderIdParam || pendingCheckout
+        );
+
+        if (!hasValidSuccessIndicators) {
+          console.warn(
+            "Success page accessed without valid completion indicators"
+          );
+          return;
+        }
+
+        // Get order ID from URL params or pending checkout
+        const orderId = orderIdParam
+          ? parseInt(orderIdParam)
+          : pendingCheckout?.orderId;
+
+        if (orderId && pendingCheckout) {
+          console.log(`Clearing cart after order completion: ${orderId}`);
+
+          try {
+            // Use the new clearAfterOrder procedure with built-in delay
+            await clearCartAfterOrderMutation.mutateAsync({
+              sessionId,
+              orderId,
+              waitForCompletion: true,
+            });
+
+            console.log("Cart cleared successfully after order completion");
+
+            // Clear local cart store
+            clearCart();
+
+            toast.success("Order completed successfully!");
+          } catch (error) {
+            console.error("Failed to clear cart after order:", error);
+
+            // Fallback: try basic clearing after additional delay
+            setTimeout(async () => {
+              try {
+                await clearServerCartMutation.mutateAsync({
+                  sessionId,
+                  orderId,
+                });
+                clearCart();
+                console.log("Cart cleared with fallback method");
+              } catch (fallbackError) {
+                console.error(
+                  "Fallback cart clear also failed:",
+                  fallbackError
+                );
+                // Just clear local cart to avoid stuck state
+                clearCart();
+              }
+            }, 2000);
+          }
+        } else {
+          console.log("No order ID found, using basic cart clear");
+
+          // Fallback to basic clear if no order ID
+          try {
+            await clearServerCartMutation.mutateAsync({ sessionId });
+            clearCart();
+            toast.success("Order completed successfully!");
+          } catch (error) {
+            console.error("Basic cart clear failed:", error);
+            clearCart(); // Clear local cart anyway
+          }
+        }
+
+        // Clean up sessionStorage
+        try {
+          sessionStorage.removeItem("checkout:pending");
+          sessionStorage.removeItem("checkout:cleared");
+          sessionStorage.removeItem("checkout:optimistic-cleared");
+        } catch (e) {
+          console.warn("Could not clean up sessionStorage", e);
+        }
+      } catch (error) {
+        console.error("Error during cart clearing process:", error);
+
+        // Fallback: clear local cart to avoid stuck state
+        clearCart();
+        queryClient.invalidateQueries({
+          queryKey: orpc.cart.get.queryKey({ input: { sessionId } }),
+        });
+      }
+    }, 3000); // Increased to 3 seconds to ensure order processing is complete
+
+    // Cleanup timeout on unmount
+    return () => clearTimeout(clearCartAfterDelay);
+  }, [
+    sessionId,
+    clearCartAfterOrderMutation,
+    clearServerCartMutation,
+    clearCart,
+    queryClient,
+  ]);
+
+  // Additional safety net: Check for cart state inconsistency
+  React.useEffect(() => {
+    if (!sessionId || !cartData) return;
+
+    // If server says cart is empty but local state has items, clear local state
+    if (cartData.items.length === 0 && items.length > 0) {
+      console.log("Detected cart state inconsistency, clearing local cart");
+      clearCart();
+    }
+  }, [cartData, items, clearCart, sessionId]);
 
   const handleUpdateQuantity = (itemId: number, quantity: number) => {
     const nextQty = Math.max(1, quantity); // clamp to >= 1
@@ -156,32 +323,6 @@ export function CartItems() {
     });
   };
 
-  // Option B — Definitive clear once on the success page
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!sessionId) return;
-
-    const url = new URL(window.location.href);
-    const isSuccess = url.pathname.startsWith("/checkout/success");
-    if (!isSuccess) return;
-
-    (async () => {
-      try {
-        await clearServerCartMutation.mutateAsync({ sessionId });
-      } catch {
-        // ignore errors; we still clear local
-      } finally {
-        clearCart();
-        queryClient.invalidateQueries({
-          queryKey: orpc.cart.get.queryKey({ input: { sessionId } }),
-        });
-        try {
-          sessionStorage.removeItem("checkout:optimistic-cleared");
-        } catch {}
-      }
-    })();
-  }, [sessionId, clearServerCartMutation, clearCart, queryClient]);
-
   // Determine validation state for UI
   const canCheckout = hasUsername && isValid;
   const validationError = !hasUsername
@@ -212,7 +353,7 @@ export function CartItems() {
           </p>
         </div>
         <div className="w-full max-w-md">
-          <MinecraftUserDisplay showForEmptyCart />
+          <MinecraftAvatarButton />
         </div>
       </div>
     );
@@ -222,7 +363,7 @@ export function CartItems() {
     <div className="flex flex-col h-full px-4">
       {/* Minecraft User Section */}
       <div className="mb-4">
-        <MinecraftUserDisplay />
+        <MinecraftAvatarButton />
       </div>
 
       {/* Enhanced Validation Warning */}
@@ -364,6 +505,7 @@ export function CartItems() {
         ))}
       </div>
 
+
       {/* Checkout Section */}
       <div className="mt-4 space-y-4 border-t pt-4">
         <div className="space-y-2">
@@ -386,6 +528,37 @@ export function CartItems() {
           <span className="text-lg">${(total / 100).toFixed(2)}</span>
         </div>
 
+        {/* ✅ Clear Cart Button */}
+        <Button
+          variant="outline"
+          className="w-full h-10 text-sm font-medium"
+          onClick={() => {
+            clearServerCartMutation.mutate(
+              { sessionId },
+              {
+                onSuccess: () => {
+                  clearCart(); // clear local store
+                  toast.success("Cart cleared successfully");
+                },
+                onError: () => {
+                  toast.error("Failed to clear cart");
+                },
+              }
+            );
+          }}
+          disabled={clearServerCartMutation.isPending}
+        >
+          {clearServerCartMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Clearing...
+            </>
+          ) : (
+            "Clear Cart"
+          )}
+        </Button>
+
+        {/* Checkout Button */}
         <Button
           className={cn(
             "w-full h-11 text-base font-medium transition-all",
@@ -410,21 +583,6 @@ export function CartItems() {
             "Proceed to Checkout"
           )}
         </Button>
-
-        {!canCheckout && (
-          <div className="text-xs text-center space-y-1">
-            <p className="text-muted-foreground">
-              {!hasUsername
-                ? "Please set your Minecraft username above to continue"
-                : "Please fix your Minecraft username to continue"}
-            </p>
-            {!hasUsername && (
-              <p className="text-primary">
-                Click "Add Username" above to get started
-              </p>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

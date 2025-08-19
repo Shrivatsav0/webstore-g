@@ -58,13 +58,14 @@ export function CartButton() {
 
           {itemCount > 0 && (
             <Badge
+              asChild
               variant="destructive"
               className={cn(
                 "absolute -right-2 -top-2 h-5 w-5 rounded-full p-0 text-xs font-bold transition-all duration-200",
                 shouldPulse && "animate-pulse scale-110"
               )}
             >
-              {itemCount > 99 ? "99+" : itemCount}
+              <span>{itemCount > 99 ? "99+" : itemCount}</span>
             </Badge>
           )}
         </Button>
@@ -81,7 +82,7 @@ export function CartButton() {
             </div>
             <SheetClose asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <X className="h-4 w-4" />
+                {/* <X className="h-4 w-4" /> */}
                 <span className="sr-only">Close</span>
               </Button>
             </SheetClose>
