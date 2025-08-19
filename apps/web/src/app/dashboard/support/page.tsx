@@ -630,11 +630,11 @@ export default function SupportDashboard() {
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-4 mb-8">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              {/* <TabsTrigger value="overview" className="flex items-center gap-2">
                 <BarChart3 className="size-4" />
                 Overview
-              </TabsTrigger>
+              </TabsTrigger> */}
               <TabsTrigger value="config" className="flex items-center gap-2">
                 <HelpCircle className="size-4" />
                 Configuration
@@ -653,7 +653,7 @@ export default function SupportDashboard() {
             </TabsList>
 
             {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
+            {/* <TabsContent value="overview" className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardContent className="p-6">
@@ -727,7 +727,7 @@ export default function SupportDashboard() {
                   </CardContent>
                 </Card>
               </div>
-            </TabsContent>
+            </TabsContent> */}
 
             {/* Configuration Tab */}
             <TabsContent value="config" className="space-y-6">
