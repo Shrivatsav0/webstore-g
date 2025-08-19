@@ -13,6 +13,7 @@ import { cartRoute } from "../lib/procedures/cart";
 import { checkoutRoute } from "../lib/procedures/checkout";
 import { mcUsersRoute } from "../lib/procedures/mcUsers";
 import { supportRoute } from "../lib/adminProcedures/support";
+// header/footer merged into siteConfig
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {

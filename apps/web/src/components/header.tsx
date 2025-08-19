@@ -1,3 +1,4 @@
+// components/header.tsx
 "use client";
 
 import Link from "next/link";
@@ -7,18 +8,39 @@ import { ShoppingBag } from "lucide-react";
 import { links } from "../../../../data/data";
 import { CartButton } from "./cart/cart-btn";
 import { MinecraftAvatarButton } from "./minecraft/mc-head";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
+import { Skeleton } from "@/components/ui/skeleton";
+
 export function Header() {
+  const { data: siteConfigData, isLoading: isSiteConfigLoading } = useQuery(
+    orpc.siteConfig.list.queryOptions()
+  );
+
+  const logoText = siteConfigData?.[0]?.headerLogoText || "BlockShop";
+  const showLogo = siteConfigData?.[0]?.headerShowLogo ?? true;
+
   return (
     <header className="bg-background sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-row items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <ShoppingBag className="size-8 text-foreground" />
-            <span className="text-2xl font-bold text-foreground">
-              BlockShop
-            </span>
+            {isSiteConfigLoading ? (
+              <>
+                <Skeleton className="size-8 rounded-md" />
+                <Skeleton className="h-8 w-32 rounded-md" />
+              </>
+            ) : (
+              <>
+                {showLogo && <ShoppingBag className="size-8 text-foreground" />}
+                <span className="text-2xl font-bold text-foreground">
+                  {logoText}
+                </span>
+              </>
+            )}
           </Link>
+
           {/* Right side controls */}
           <div className="flex items-center gap-3">
             {/* Navigation */}
@@ -34,7 +56,6 @@ export function Header() {
               ))}
             </nav>
             <ModeToggle />
-            {/* <UserMenu /> */}
             <MinecraftAvatarButton />
             <CartButton />
           </div>

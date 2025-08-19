@@ -5,6 +5,13 @@ export const siteConfigInput = z.object({
   name: z.string().max(100),
   url: z.string().max(255),
   description: z.string(),
+  // merged header
+  headerLogoText: z.string().max(50),
+  headerShowLogo: z.boolean().default(true),
+  // merged footer
+  footerDescription: z.string(),
+  footerCopyright: z.string().max(100),
+  footerPoweredBy: z.string().max(50),
 });
 export const siteConfigUpdate = siteConfigInput.extend({ id: z.number() });
 
@@ -41,8 +48,17 @@ export const newsletterInput = z.object({
 });
 export const newsletterUpdate = newsletterInput.extend({ id: z.number() });
 
+// header
+export const headerInput = z.object({
+  logoText: z.string().max(50),
+  showLogo: z.boolean().default(true),
+});
+export const headerUpdate = headerInput.extend({ id: z.number() });
+
 // footer
 export const footerInput = z.object({
   description: z.string(),
+  copyright: z.string().max(100),
+  poweredBy: z.string().max(50),
 });
 export const footerUpdate = footerInput.extend({ id: z.number() });

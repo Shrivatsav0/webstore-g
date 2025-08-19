@@ -1,10 +1,24 @@
-import { pgTable, serial, text, varchar, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  serial,
+  text,
+  varchar,
+  timestamp,
+  boolean,
+} from "drizzle-orm/pg-core";
 
 export const siteConfig = pgTable("site_config", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   url: varchar("url", { length: 255 }).notNull(),
   description: text("description").notNull(),
+  // Header fields (merged)
+  headerLogoText: varchar("header_logo_text", { length: 50 }).notNull(),
+  headerShowLogo: boolean("header_show_logo").default(true).notNull(),
+  // Footer fields (merged)
+  footerDescription: text("footer_description").notNull(),
+  footerCopyright: varchar("footer_copyright", { length: 100 }).notNull(),
+  footerPoweredBy: varchar("footer_powered_by", { length: 50 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -39,13 +53,6 @@ export const categories = pgTable("categories", {
 export const newsletter = pgTable("newsletter", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 80 }).notNull(),
-  description: text("description").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const footer = pgTable("footer", {
-  id: serial("id").primaryKey(),
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

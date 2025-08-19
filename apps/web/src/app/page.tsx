@@ -39,9 +39,12 @@ export default function LandingPage() {
   const featuresQuery = useQuery(
     orpc.featuresConfig.list.queryOptions({ context: {} })
   );
-
+  const siteConfigQuery = useQuery(
+    orpc.siteConfig.list.queryOptions({ context: {} })
+  );
   const isLoading = heroQuery.isLoading || featuresQuery.isLoading;
-  const error = heroQuery.error || featuresQuery.error;
+  const isFooterLoading = siteConfigQuery.isLoading;
+  const error = heroQuery.error || featuresQuery.error || siteConfigQuery.error;
 
   const [heroConfig, setHeroConfig] = useState({
     badgeText: "",
@@ -218,40 +221,47 @@ export default function LandingPage() {
                     <div className="flex items-center space-x-2">
                       {SiteLogo ? <SiteLogo className="size-6" /> : null}
                       <span className="text-xl font-bold">
-                        {siteConfig.name}
+                        {siteConfigQuery.data?.[0]?.headerLogoText ||
+                          siteConfig.name}
                       </span>
                     </div>
-                    <p className="text-muted-foreground">
-                      {footerData.description}
-                    </p>
-                  </div>
-                  {footerData.sections.map((section, index) => (
-                    <div key={index} className="space-y-4">
-                      <h3 className="font-semibold">{section.title}</h3>
+                    {isFooterLoading ? (
                       <div className="space-y-2">
-                        {section.links.map((link, linkIndex) => (
-                          <Link
-                            key={linkIndex}
-                            href={link.href}
-                            className="block text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
                       </div>
-                    </div>
-                  ))}
-                </div>
-                <Separator className="mb-8" />
-                <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                  <p className="text-muted-foreground">
-                    {footerData.copyright}
-                  </p>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm text-muted-foreground">
-                      {footerData.poweredBy}
-                    </span>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        {siteConfigQuery.data?.[0]?.footerDescription ||
+                          footerData.description}
+                      </p>
+                    )}
                   </div>
+                </div>
+
+                <Separator className="mb-8" />
+
+                <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+                  {isFooterLoading ? (
+                    <>
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-4 w-32" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-muted-foreground">
+                        {siteConfigQuery.data?.[0]?.footerCopyright ||
+                          footerData.copyright}
+                      </p>
+                      <div className="flex items-center space-x-4">
+                        <span className="text-sm text-muted-foreground">
+                          {siteConfigQuery.data?.[0]?.footerPoweredBy ||
+                            footerData.poweredBy}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </footer>

@@ -46,7 +46,6 @@ import {
   features as initialFeatures,
   categories as initialCategories,
   newsletter as initialNewsletter,
-  footerData as initialFooter,
   categoryItems as allCategories,
   type CategoryWithCTA,
 } from "../../../../../../data/data";
@@ -112,6 +111,11 @@ const siteConfigSchema = z.object({
     .string()
     .min(10, "Description too short")
     .max(500, "Description too long"),
+  headerLogoText: z.string().min(1, "Logo text required").max(50, "Too long"),
+  headerShowLogo: z.boolean(),
+  footerDescription: z.string().min(10, "Description too short").max(300),
+  footerCopyright: z.string().min(1, "Copyright required").max(100),
+  footerPoweredBy: z.string().min(1, "Powered by required").max(50),
 });
 
 const heroSchema = z.object({
@@ -174,7 +178,7 @@ export default function LandingPageDashboard() {
   const [features, setFeatures] = useState(initialFeatures);
   const [categories, setCategories] = useState<CategoryWithCTA[]>([]);
   const [newsletter, setNewsletter] = useState(initialNewsletter);
-  const [footerData, setFooterData] = useState(initialFooter);
+
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">(
@@ -197,6 +201,11 @@ export default function LandingPageDashboard() {
     name: "",
     url: "",
     description: "",
+    headerLogoText: "",
+    headerShowLogo: true,
+    footerDescription: "",
+    footerCopyright: "",
+    footerPoweredBy: "",
   });
 
   // When DB data loads, update local state
@@ -206,6 +215,11 @@ export default function LandingPageDashboard() {
         name: siteConfigData[0].name ?? "",
         url: siteConfigData[0].url ?? "",
         description: siteConfigData[0].description ?? "",
+        headerLogoText: siteConfigData[0].headerLogoText ?? "",
+        headerShowLogo: siteConfigData[0].headerShowLogo ?? true,
+        footerDescription: siteConfigData[0].footerDescription ?? "",
+        footerCopyright: siteConfigData[0].footerCopyright ?? "",
+        footerPoweredBy: siteConfigData[0].footerPoweredBy ?? "",
       });
     }
   }, [siteConfigData]);
@@ -298,6 +312,37 @@ export default function LandingPageDashboard() {
     })
   );
 
+  const [headerConfig, setHeaderConfig] = useState({
+    logoText: "",
+    showLogo: true,
+  });
+
+  const [footerConfig, setFooterConfig] = useState({
+    description: "",
+    copyright: "",
+    poweredBy: "",
+  });
+
+  // header/footer now part of siteConfig
+
+  // Add these useEffects:
+  useEffect(() => {
+    if (siteConfigData && siteConfigData.length > 0) {
+      setHeaderConfig({
+        logoText: siteConfigData[0].headerLogoText ?? "",
+        showLogo: siteConfigData[0].headerShowLogo ?? true,
+      });
+      setFooterConfig({
+        description: siteConfigData[0].footerDescription ?? "",
+        copyright: siteConfigData[0].footerCopyright ?? "",
+        poweredBy: siteConfigData[0].footerPoweredBy ?? "",
+      });
+    }
+  }, [siteConfigData]);
+
+  // Add these mutations:
+  // header/footer merged -> saving through siteConfig only
+
   const completionStats = useMemo(() => {
     let totalFields = 0;
     let completedFields = 0;
@@ -307,10 +352,14 @@ export default function LandingPageDashboard() {
       if (value && value.toString().trim() !== "") completedFields++;
     };
 
-    // Site Config
+    // Site Config (including header/footer)
     checkField(siteConfig.name);
     checkField(siteConfig.url);
     checkField(siteConfig.description);
+    checkField(siteConfig.headerLogoText);
+    checkField(siteConfig.footerDescription);
+    checkField(siteConfig.footerCopyright);
+    checkField(siteConfig.footerPoweredBy);
 
     // Hero
     checkField(heroConfig.badgeText);
@@ -335,18 +384,8 @@ export default function LandingPageDashboard() {
     checkField(newsletter.title);
     checkField(newsletter.description);
 
-    // Footer
-    checkField(footerData.description);
-
     return Math.round((completedFields / totalFields) * 100);
-  }, [
-    siteConfig,
-    heroConfigData,
-    features,
-    categories,
-    newsletter,
-    footerData,
-  ]);
+  }, [siteConfig, heroConfigData, features, categories, newsletter]);
 
   const validateAllData = (): ValidationError[] => {
     const validationErrors: ValidationError[] = [];
@@ -411,17 +450,6 @@ export default function LandingPageDashboard() {
       });
     }
 
-    const footerResult = footerSchema.safeParse(footerData);
-    if (!footerResult.success) {
-      footerResult.error.issues.forEach((err) => {
-        validationErrors.push({
-          section: "Footer",
-          field: err.path.join("."),
-          message: err.message,
-        });
-      });
-    }
-
     return validationErrors;
   };
 
@@ -447,7 +475,6 @@ export default function LandingPageDashboard() {
         features,
         categories,
         newsletter,
-        footerData,
       });
 
       setSaveStatus("success");
@@ -465,7 +492,7 @@ export default function LandingPageDashboard() {
       setIsLoading(false);
     }
 
-    // SITE CONFIG
+    // SITE CONFIG (now includes header/footer fields)
 
     try {
       await siteConfigMutation.mutateAsync(siteConfig);
@@ -497,6 +524,8 @@ export default function LandingPageDashboard() {
       console.log("Saving features:", featuresConfig);
       console.log("error message = ", error?.message);
     }
+
+    // header/footer saved through siteConfig now
   };
 
   const StatCard = ({
@@ -647,15 +676,15 @@ export default function LandingPageDashboard() {
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-4 mb-8">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              {/* <TabsTrigger value="overview" className="flex items-center gap-2">
                 <BarChart3 className="size-4" />
                 Overview
-              </TabsTrigger>
-              {/* <TabsTrigger value="site" className="flex items-center gap-2">
+              </TabsTrigger> */}
+              <TabsTrigger value="site" className="flex items-center gap-2">
                 <Globe className="size-4" />
                 Site Config
-              </TabsTrigger> */}
+              </TabsTrigger>
               <TabsTrigger value="hero" className="flex items-center gap-2">
                 <LayoutDashboard className="size-4" />
                 Hero
@@ -664,17 +693,6 @@ export default function LandingPageDashboard() {
                 <Star className="size-4" />
                 Features
               </TabsTrigger>
-              <TabsTrigger
-                value="categories"
-                className="flex items-center gap-2"
-              >
-                <ShoppingBag className="size-4" />
-                Categories
-              </TabsTrigger>
-              {/* <TabsTrigger value="other" className="flex items-center gap-2">
-                <Settings className="size-4" />
-                Other
-              </TabsTrigger> */}
             </TabsList>
 
             {/* OVERVIEW TAB */}
@@ -713,7 +731,7 @@ export default function LandingPageDashboard() {
               </Card>
 
               {/* Analytics Overview */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                   title="Total Visitors"
                   value={mockAnalytics.overview.totalVisitors.toLocaleString()}
@@ -738,10 +756,10 @@ export default function LandingPageDashboard() {
                   change="+15s"
                   icon={Clock}
                 />
-              </div>
+              </div> */}
 
               {/* Section Performance */}
-              <div className="grid gap-6 lg:grid-cols-2">
+              {/* <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -840,7 +858,7 @@ export default function LandingPageDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </div> */}
 
               {/* Quick Actions */}
               <Card>
@@ -1049,36 +1067,6 @@ export default function LandingPageDashboard() {
                     />
                   </div>
                   <SectionTip text="Offer value in your newsletter signup. What will subscribers get that others won't?" />
-                </CardContent>
-              </Card>
-
-              {/* Footer Section */}
-              <Card className="border-2 hover:border-primary/20 transition-colors">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Footprints className="size-6 text-primary" />
-                    </div>
-                    Footer
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    Footer content and company information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <CInput
-                    label="Footer Description"
-                    value={footerData.description}
-                    onChange={(e) =>
-                      setFooterData({
-                        ...footerData,
-                        description: e.target.value,
-                      })
-                    }
-                    textarea
-                    placeholder="Brief company description or mission statement"
-                  />
-                  <SectionTip text="Include your brand message and key information visitors might need." />
                 </CardContent>
               </Card>
             </TabsContent>
