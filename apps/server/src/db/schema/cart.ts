@@ -75,6 +75,7 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   price: integer("price").notNull(), // in cents
   total: integer("total").notNull(), // in cents
+  commands: text("commands").array().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

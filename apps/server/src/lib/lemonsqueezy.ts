@@ -1,6 +1,7 @@
 // apps/server/lib/lemonsqueezy.ts
 import { lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
 
+
 export function configureLemonSqueezy() {
   const requiredVars = [
     "LEMONSQUEEZY_API_KEY",

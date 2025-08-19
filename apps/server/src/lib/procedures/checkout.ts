@@ -12,6 +12,7 @@ import { os } from "@orpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { configureLemonSqueezy } from "../../lib/lemonsqueezy";
+import { MinecraftService } from "../services/minecraft";
 
 // Create checkout session with dynamic product info
 export const createCheckoutSession = os
@@ -63,6 +64,7 @@ export const createCheckoutSession = os
             price: products.price,
             image: products.image,
             stock: products.stock,
+            commands: products.commands,
           },
         })
         .from(cartItems)
@@ -105,6 +107,7 @@ export const createCheckoutSession = os
           quantity: item.quantity,
           price: item.product.price,
           total: item.product.price * item.quantity,
+          commands: item.product.commands || [],
         }))
       );
 
@@ -249,7 +252,6 @@ export const createCheckoutSession = os
     }
   });
 
-
 export const getOrderBySession = os
   .input(z.object({ sessionId: z.string() }))
   .handler(async ({ input }) => {
@@ -280,7 +282,7 @@ export const getOrderBySession = os
         })
         .from(orders)
         .where(eq(orders.sessionId, input.sessionId))
-        .orderBy(orders.createdAt) 
+        .orderBy(orders.createdAt)
         .limit(1)
         .then((rows) => rows[0]);
 

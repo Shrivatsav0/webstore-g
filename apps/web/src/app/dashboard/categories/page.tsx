@@ -50,11 +50,12 @@ import {
   AlertCircle,
   Loader2,
   Eye,
-  DollarSign,
   TrendingUp,
   Activity,
   FolderOpen,
   PackageOpen,
+  Terminal,
+  X,
 } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -85,6 +86,7 @@ type Product = {
   stock: number | null;
   isActive: boolean | null;
   categoryId: number;
+  commands?: string[];
   createdAt: Date;
   updatedAt: Date;
   category: {
@@ -116,6 +118,17 @@ const productSchema = z.object({
   categoryId: z.number().min(1, "Category is required"),
   stock: z.number().min(0, "Stock must be non-negative").default(0),
   isActive: z.boolean().default(true),
+  commands: z
+    .array(z.string().min(1, "Command cannot be empty"))
+    .default([])
+    .refine(
+      (commands) => {
+        return commands.every((cmd) => cmd.includes("{user}"));
+      },
+      {
+        message: "All commands must contain {user} placeholder",
+      }
+    ),
 });
 
 export default function CategoriesProductsDashboard() {
@@ -150,8 +163,10 @@ export default function CategoriesProductsDashboard() {
     categoryId: 0,
     stock: 0,
     isActive: true,
+    commands: [] as string[],
   });
 
+  const [newCommand, setNewCommand] = useState("");
   // Queries
   const {
     data: categories,
@@ -305,6 +320,7 @@ export default function CategoriesProductsDashboard() {
       categoryId: 0,
       stock: 0,
       isActive: true,
+      commands: [],
     });
   };
 
@@ -330,6 +346,7 @@ export default function CategoriesProductsDashboard() {
       categoryId: product.categoryId,
       stock: product.stock || 0,
       isActive: product.isActive ?? true,
+      commands: product.commands || [],
     });
     setProductDialogOpen(true);
   };
@@ -352,7 +369,25 @@ export default function CategoriesProductsDashboard() {
       }
     }
   };
+  const addCommand = () => {
+    if (
+      newCommand.trim() &&
+      !productForm.commands.includes(newCommand.trim())
+    ) {
+      setProductForm({
+        ...productForm,
+        commands: [...productForm.commands, newCommand.trim()],
+      });
+      setNewCommand("");
+    }
+  };
 
+  const removeCommand = (index: number) => {
+    setProductForm({
+      ...productForm,
+      commands: productForm.commands.filter((_, i) => i !== index),
+    });
+  };
   const handleProductSubmit = () => {
     try {
       const validatedData = productSchema.parse(productForm);
@@ -1040,118 +1075,122 @@ export default function CategoriesProductsDashboard() {
                         </div>
                       </div>
 
-                      {/* PRICING & STOCK */}
+                      {/* PRICING */}
                       <div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="price">Price</Label>
-                            <div className="relative">
-                              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                                $
-                              </span>
-                              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
-                                USD
-                              </span>
-                              <Input
-                                id="price"
-                                type="number"
-                                inputMode="decimal"
-                                step="0.01"
-                                min={0}
-                                className="pl-8 pr-10"
-                                value={(productForm.price / 100).toFixed(2)}
-                                onChange={(e) => {
-                                  const raw = e.target.value;
-                                  if (raw.trim() === "") {
-                                    setProductForm({
-                                      ...productForm,
-                                      price: 0,
-                                    });
-                                    return;
-                                  }
-                                  const num = Number.parseFloat(raw);
-                                  const clamped = Number.isFinite(num)
-                                    ? Math.max(0, num)
-                                    : 0;
+                        <div className="grid gap-2">
+                          <Label htmlFor="price">Price</Label>
+                          <div className="relative">
+                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                              $
+                            </span>
+                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                              USD
+                            </span>
+                            <Input
+                              id="price"
+                              type="number"
+                              inputMode="decimal"
+                              step="0.01"
+                              min={0}
+                              className="pl-8 pr-10"
+                              value={(productForm.price / 100).toFixed(2)}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (raw.trim() === "") {
                                   setProductForm({
                                     ...productForm,
-                                    price: Math.round(clamped * 100),
+                                    price: 0,
                                   });
-                                }}
-                                placeholder="0.00"
-                              />
-                            </div>
-                          </div>
-                          {/* <div className="grid gap-2">
-                            <Label htmlFor="stock">Stock</Label>
-                            <Input
-                              id="stock"
-                              type="number"
-                              value={productForm.stock}
-                              onChange={(e) =>
+                                  return;
+                                }
+                                const num = Number.parseFloat(raw);
+                                const clamped = Number.isFinite(num)
+                                  ? Math.max(0, num)
+                                  : 0;
                                 setProductForm({
                                   ...productForm,
-                                  stock: parseInt(e.target.value) || 0,
-                                })
-                              }
-                              placeholder="0"
+                                  price: Math.round(clamped * 100),
+                                });
+                              }}
+                              placeholder="0.00"
                             />
-                            {productForm.stock > 0 ? (
-                              <Badge variant="default">In Stock</Badge>
-                            ) : (
-                              <Badge variant="destructive">Out of Stock</Badge>
-                            )}
-                          </div> */}
+                          </div>
                         </div>
                       </div>
 
-                      {/* <div className="mt-4">
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-                          Stock Management
+                      {/* MINECRAFT COMMANDS - NEW SECTION */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                          <Terminal className="size-4" />
+                          Minecraft Commands
                         </h4>
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="enableStock">
-                            Enable Stock Tracking
-                          </Label>
-                          <Switch
-                            id="enableStock"
-                            checked={productForm.stock !== null}
-                            onCheckedChange={(checked) =>
-                              setProductForm({
-                                ...productForm,
-                                stock: checked ? 0 : null,
-                              })
-                            }
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Commands to execute when this product is purchased.
+                          Use {"{user}"} as placeholder for the Minecraft
+                          username.
+                        </p>
+
+                        {/* Command Input */}
+                        <div className="flex gap-2 mb-3">
+                          <Input
+                            value={newCommand}
+                            onChange={(e) => setNewCommand(e.target.value)}
+                            placeholder="e.g., lp {user} parent set vip"
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addCommand();
+                              }
+                            }}
                           />
+                          <Button
+                            type="button"
+                            onClick={addCommand}
+                            disabled={!newCommand.trim()}
+                            size="sm"
+                          >
+                            <Plus className="size-4" />
+                          </Button>
                         </div>
 
-                        {productForm.stock !== null && (
-                          <div className="grid gap-2 mt-3">
-                            <Label htmlFor="stock">Stock Quantity</Label>
-                            <Input
-                              id="stock"
-                              type="number"
-                              min={0} // ✅ HTML-level restriction
-                              value={productForm.stock ?? 0}
-                              onChange={(e) =>
-                                setProductForm({
-                                  ...productForm,
-                                  stock: Math.max(
-                                    0,
-                                    parseInt(e.target.value) || 0
-                                  ), // ✅ JS-level restriction
-                                })
-                              }
-                              placeholder="0"
-                            />
-                            {productForm.stock > 0 ? (
-                              <Badge variant="default">In Stock</Badge>
-                            ) : (
-                              <Badge variant="destructive">Out of Stock</Badge>
-                            )}
+                        {/* Commands List */}
+                        {productForm.commands.length > 0 && (
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">
+                              Commands to execute:
+                            </Label>
+                            <div className="space-y-1 max-h-32 overflow-y-auto">
+                              {productForm.commands.map((command, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm"
+                                >
+                                  <Terminal className="size-3 text-muted-foreground flex-shrink-0" />
+                                  <code className="flex-1 font-mono text-xs">
+                                    {command}
+                                  </code>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeCommand(index)}
+                                    className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                  >
+                                    <X className="size-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
-                      </div> */}
+
+                        {productForm.commands.length === 0 && (
+                          <div className="text-center py-4 text-muted-foreground text-sm border-2 border-dashed rounded">
+                            No commands added yet. Add commands that will be
+                            executed when this product is purchased.
+                          </div>
+                        )}
+                      </div>
 
                       {/* CATEGORY */}
                       <div>
@@ -1323,6 +1362,7 @@ export default function CategoriesProductsDashboard() {
                           <TableHead>Stock</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
+                          <TableHead>Commands</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1403,6 +1443,14 @@ export default function CategoriesProductsDashboard() {
                                     <Trash2 className="size-4" />
                                   )}
                                 </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Terminal className="size-3 text-muted-foreground" />
+                                <Badge variant="outline" className="text-xs">
+                                  {product.commands?.length || 0}
+                                </Badge>
                               </div>
                             </TableCell>
                           </TableRow>

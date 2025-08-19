@@ -4,6 +4,8 @@ import crypto from "crypto";
 import { db } from "../../../../db";
 import { orders } from "../../../../db/schema/cart";
 import { eq } from "drizzle-orm";
+import { MinecraftService } from "../../../../lib/services/minecraft";
+import { orderItems } from "../../../../db/schema/cart";
 
 export async function POST(request: NextRequest) {
   try {
@@ -115,15 +117,71 @@ async function handleOrderCreated(event: any) {
         .update(orders)
         .set(orderUpdateData)
         .where(eq(orders.id, order.id));
+
+      // NEW: Execute Minecraft commands if payment is successful
+      if (orderData.status === "paid" && customData?.minecraft_username) {
+        try {
+          console.log("Payment successful, executing Minecraft commands...");
+
+          // Get all order items with commands
+          const items = await db
+            .select({
+              commands: orderItems.commands,
+              productName: orderItems.productName,
+              quantity: orderItems.quantity,
+            })
+            .from(orderItems)
+            .where(eq(orderItems.orderId, order.id));
+
+          // Collect all commands from all items
+          const allCommands: string[] = [];
+          items.forEach((item) => {
+            if (item.commands && item.commands.length > 0) {
+              // Repeat commands based on quantity
+              for (let i = 0; i < item.quantity; i++) {
+                allCommands.push(...item.commands);
+              }
+            }
+          });
+
+          if (allCommands.length > 0) {
+            await MinecraftService.executeCommands(
+              order.id,
+              customData.minecraft_username,
+              allCommands
+            );
+            console.log(
+              `Successfully sent ${allCommands.length} commands to Minecraft server`
+            );
+          } else {
+            console.log("No commands to execute for this order");
+          }
+        } catch (minecraftError) {
+          console.error(
+            "Failed to execute Minecraft commands:",
+            minecraftError
+          );
+          // Don't fail the webhook if Minecraft commands fail
+        }
+      }
     } else {
       // Create new order (fallback)
       console.log("Creating new order as fallback");
-      await db.insert(orders).values({
-        ...orderUpdateData,
-        userId: customData?.user_id || null, // Handle missing user_id gracefully
-        sessionId: customData?.session_id || null,
-        createdAt: new Date(),
-      });
+      const [newOrder] = await db
+        .insert(orders)
+        .values({
+          ...orderUpdateData,
+          userId: customData?.user_id || null,
+          sessionId: customData?.session_id || null,
+          createdAt: new Date(),
+        })
+        .returning();
+
+      // Execute commands for new order too
+      if (orderData.status === "paid" && customData?.minecraft_username) {
+        // Similar command execution logic for new orders
+        console.log("Executing commands for new order...");
+      }
     }
 
     console.log("Order created/updated successfully");

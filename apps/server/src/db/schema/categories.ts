@@ -31,13 +31,14 @@ export const products = pgTable("products", {
   categoryId: integer("category_id")
     .references(() => categories.id)
     .notNull(),
-  stock: integer("stock").default(0),
+  stock: integer("stock").default(1),
   isActive: boolean("is_active").default(true),
+  commands: text("commands").array().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Relations
+// Relations remain the same
 export const categoriesRelations = relations(categories, ({ many }) => ({
   products: many(products),
 }));

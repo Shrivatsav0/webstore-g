@@ -28,6 +28,17 @@ export const productInput = z.object({
   categoryId: z.number().min(1, "Category is required"),
   stock: z.number().min(0, "Stock must be non-negative").default(0),
   isActive: z.boolean().default(true),
+  commands: z
+    .array(z.string().min(1, "Command cannot be empty"))
+    .default([])
+    .refine(
+      (commands) => {
+        return commands.every((cmd) => cmd.includes("{user}"));
+      },
+      {
+        message: "All commands must contain {user} placeholder",
+      }
+    ),
 });
 
 export const productUpdateInput = productInput.partial().extend({
