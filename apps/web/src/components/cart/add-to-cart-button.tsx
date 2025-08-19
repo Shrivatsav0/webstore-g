@@ -1,13 +1,14 @@
-// apps/web/src/components/cart/add-to-cart-button.tsx
 "use client";
 
 import * as React from "react";
-import { ShoppingCart, Loader2 } from "lucide-react";
+import { ShoppingCart, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "../../../stores/cart";
 import { orpc } from "@/utils/orpc";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { MinecraftUsernameModal } from "../minecraft/minecraft-username-modal";
+import { useMinecraftUser } from "@/hooks/use-minecraft-user";
 
 interface AddToCartButtonProps {
   productId: number;
@@ -21,6 +22,8 @@ export function AddToCartButton({
   className,
 }: AddToCartButtonProps) {
   const { sessionId, generateSessionId } = useCartStore();
+  const { hasUsername, mcUser } = useMinecraftUser();
+  const [showUsernameModal, setShowUsernameModal] = React.useState(false);
   const queryClient = useQueryClient();
 
   // Generate session ID if not exists
@@ -47,6 +50,12 @@ export function AddToCartButton({
   const handleAddToCart = () => {
     if (!sessionId) return;
 
+    // Check if user has Minecraft username
+    if (!hasUsername) {
+      setShowUsernameModal(true);
+      return;
+    }
+
     addToCartMutation.mutate({
       sessionId,
       productId,
@@ -54,23 +63,49 @@ export function AddToCartButton({
     });
   };
 
+  const handleUsernameSuccess = () => {
+    // After username is set, add to cart
+    if (sessionId) {
+      addToCartMutation.mutate({
+        sessionId,
+        productId,
+        quantity: 1,
+      });
+    }
+  };
+
   return (
-    <Button
-      onClick={handleAddToCart}
-      disabled={disabled || addToCartMutation.isPending || !sessionId}
-      className={className}
-    >
-      {addToCartMutation.isPending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Adding...
-        </>
-      ) : (
-        <>
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Add to Cart
-        </>
-      )}
-    </Button>
+    <>
+      <Button
+        onClick={handleAddToCart}
+        disabled={disabled || addToCartMutation.isPending || !sessionId}
+        className={className}
+      >
+        {addToCartMutation.isPending ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Adding...
+          </>
+        ) : !hasUsername ? (
+          <>
+            <User className="mr-2 h-4 w-4" />
+            Set Username & Add to Cart
+          </>
+        ) : (
+          <>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Add to Cart
+          </>
+        )}
+      </Button>
+
+      <MinecraftUsernameModal
+        open={showUsernameModal}
+        onOpenChange={setShowUsernameModal}
+        sessionId={sessionId || ""}
+        currentUsername={mcUser?.minecraftUsername}
+        onSuccess={handleUsernameSuccess}
+      />
+    </>
   );
 }

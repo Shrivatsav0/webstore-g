@@ -30,6 +30,7 @@ interface CartStore {
   }) => void;
   setLoading: (loading: boolean) => void;
   generateSessionId: () => string;
+  clearCart: () => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -57,6 +58,13 @@ export const useCartStore = create<CartStore>()(
         set({ sessionId });
         return sessionId;
       },
+
+      clearCart: () =>
+        set({
+          items: [],
+          itemCount: 0,
+          total: 0,
+        }),
     }),
     {
       name: "cart-storage",

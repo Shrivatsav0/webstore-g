@@ -6,6 +6,7 @@ import ModeToggle from "./mode-toggle";
 import { ShoppingBag } from "lucide-react";
 import { links } from "../../../../data/data";
 import { CartButton } from "./cart/cart-btn";
+import { MinecraftAvatarButton } from "./minecraft/mc-head";
 export function Header() {
   return (
     <header className="bg-background sticky top-0 z-50">
@@ -33,7 +34,8 @@ export function Header() {
               ))}
             </nav>
             <ModeToggle />
-            <UserMenu />
+            {/* <UserMenu /> */}
+            <MinecraftAvatarButton />
             <CartButton />
           </div>
         </div>

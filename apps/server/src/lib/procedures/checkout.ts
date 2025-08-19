@@ -1,9 +1,15 @@
 // apps/server/procedures/checkout.ts
 import { db } from "../../db";
-import { orders, orderItems, carts, cartItems } from "../../db/schema/cart";
+import {
+  orders,
+  orderItems,
+  carts,
+  cartItems,
+  mcUsers,
+} from "../../db/schema/cart";
 import { products } from "../../db/schema/categories";
 import { os } from "@orpc/server";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { configureLemonSqueezy } from "../../lib/lemonsqueezy";
 
@@ -21,6 +27,18 @@ export const createCheckoutSession = os
   .handler(async ({ input }) => {
     try {
       configureLemonSqueezy();
+
+      // VALIDATE MINECRAFT USERNAME FIRST
+      const mcUser = await db
+        .select()
+        .from(mcUsers)
+        .where(eq(mcUsers.sessionId, input.sessionId))
+        .limit(1)
+        .then((rows) => rows[0] || null);
+
+      if (!mcUser?.minecraftUsername) {
+        throw new Error("Minecraft username is required for checkout");
+      }
 
       // Get cart with items
       const cart = await db
@@ -61,12 +79,13 @@ export const createCheckoutSession = os
         0
       );
 
-      // Create order record
+      // Create order record WITH MC USER REFERENCE
       const [order] = await db
         .insert(orders)
         .values({
           userId: input.userId,
           sessionId: input.sessionId,
+          mcUserId: mcUser.id, // NEW: Reference to MC user
           customerEmail: input.customerEmail,
           customerName: input.customerName,
           status: "pending",
@@ -89,6 +108,19 @@ export const createCheckoutSession = os
         }))
       );
 
+      // Rest of your existing checkout logic...
+      // Include minecraft_username in custom data
+      const customData: Record<string, string> = {
+        order_id: order.id.toString(),
+        session_id: input.sessionId,
+        minecraft_username: mcUser.minecraftUsername, // NEW
+        redirect_order_id: order.id.toString(),
+      };
+
+      if (input.userId && input.userId.trim() !== "") {
+        customData.user_id = input.userId;
+      }
+
       // Create dynamic product name and description
       const productName =
         items.length === 1
@@ -102,13 +134,12 @@ export const createCheckoutSession = os
               .map((item) => `${item.quantity}x ${item.product.name}`)
               .join(", ");
 
-      // Fix: Calculate the redirect URL with query parameters properly encoded
+      // Calculate the redirect URL with query parameters properly encoded
       const webAppUrl =
         process.env.NEXT_PUBLIC_APP_WEB_URL ||
         process.env.WEB_APP_URL ||
         "https://test-2-web.vercel.app";
 
-      // SOLUTION 1: Include order ID and session ID in the redirect URL
       const baseRedirectUrl =
         input.redirectUrl || `${webAppUrl}/checkout/success`;
       const urlObj = new URL(baseRedirectUrl);
@@ -119,71 +150,37 @@ export const createCheckoutSession = os
       }
       const redirectUrl = urlObj.toString();
 
-      console.log("=== REDIRECT URL DEBUG ===");
-      console.log("WEB_APP_URL:", process.env.WEB_APP_URL);
-      console.log(
-        "NEXT_PUBLIC_APP_WEB_URL:",
-        process.env.NEXT_PUBLIC_APP_WEB_URL
-      );
-      console.log("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL);
-      console.log("Order ID:", order.id);
-      console.log("Input redirect URL:", input.redirectUrl);
-      console.log("Base redirect URL:", baseRedirectUrl);
-      console.log("Final redirect URL:", redirectUrl);
-      console.log("============================");
-
       // Get the first product image or use a default
       const productImage =
         items.find((item) => item.product.image)?.product.image || null;
-
-      // SOLUTION 2: Store critical info in custom data for webhooks
-      const customData: Record<string, string> = {
-        order_id: order.id.toString(),
-        session_id: input.sessionId,
-        redirect_order_id: order.id.toString(), // Duplicate for safety
-      };
-
-      // Only add user_id if it exists and is not empty
-      if (input.userId && input.userId.trim() !== "") {
-        customData.user_id = input.userId;
-      }
-
-      // Prepare checkout data - only include defined values
-      const checkoutData: any = {
-        custom: customData,
-      };
-
-      if (input.customerEmail) {
-        checkoutData.email = input.customerEmail;
-      }
-
-      if (input.customerName) {
-        checkoutData.name = input.customerName;
-      }
 
       const checkoutPayload = {
         data: {
           type: "checkouts",
           attributes: {
-            custom_price: subtotal, // Price in cents
+            custom_price: subtotal,
             product_options: {
               name: productName,
               description: productDescription,
               media: productImage ? [productImage] : [],
-              redirect_url: redirectUrl, // Now includes query parameters
+              redirect_url: redirectUrl,
               receipt_button_text: "View Order",
-              receipt_link_url: redirectUrl, // SOLUTION 3: Also set receipt link
+              receipt_link_url: redirectUrl,
               receipt_thank_you_note: "Thank you for your purchase!",
             },
             checkout_options: {
-              embed: true, // Enable overlay
-              media: true, // Show product image
-              logo: true, // Show store logo
-              desc: true, // Show description
-              discount: true, // Show discount field
-              button_color: "#7047EB", // Custom button color
+              embed: true,
+              media: true,
+              logo: true,
+              desc: true,
+              discount: true,
+              button_color: "#7047EB",
             },
-            checkout_data: checkoutData,
+            checkout_data: {
+              custom: customData,
+              email: input.customerEmail,
+              name: input.customerName,
+            },
             test_mode: process.env.NODE_ENV !== "production",
           },
           relationships: {
@@ -202,10 +199,6 @@ export const createCheckoutSession = os
           },
         },
       };
-
-      console.log("=== LEMONSQUEEZY PAYLOAD ===");
-      console.log("Full payload:", JSON.stringify(checkoutPayload, null, 2));
-      console.log("============================");
 
       // Create checkout using LemonSqueezy API
       const response = await fetch(
@@ -231,10 +224,6 @@ export const createCheckoutSession = os
 
       const checkout = await response.json();
 
-      console.log("=== LEMONSQUEEZY RESPONSE ===");
-      console.log("Checkout response:", JSON.stringify(checkout, null, 2));
-      console.log("============================");
-
       if (!checkout.data?.attributes?.url) {
         throw new Error("No checkout URL returned from LemonSqueezy");
       }
@@ -252,6 +241,7 @@ export const createCheckoutSession = os
       return {
         checkoutUrl: checkout.data.attributes.url,
         orderId: order.id,
+        minecraftUsername: mcUser.minecraftUsername,
       };
     } catch (err) {
       console.error("Error in createCheckoutSession:", err);
@@ -259,7 +249,7 @@ export const createCheckoutSession = os
     }
   });
 
-// SOLUTION 4: Add a new procedure to get order by session ID as fallback
+
 export const getOrderBySession = os
   .input(z.object({ sessionId: z.string() }))
   .handler(async ({ input }) => {
@@ -290,7 +280,7 @@ export const getOrderBySession = os
         })
         .from(orders)
         .where(eq(orders.sessionId, input.sessionId))
-        .orderBy(orders.createdAt) // Get the most recent order for this session
+        .orderBy(orders.createdAt) 
         .limit(1)
         .then((rows) => rows[0]);
 
