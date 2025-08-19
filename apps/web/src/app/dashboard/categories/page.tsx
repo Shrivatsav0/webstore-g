@@ -1449,7 +1449,7 @@ export default function CategoriesProductsDashboard() {
                               <div className="flex items-center gap-1">
                                 <Terminal className="size-3 text-muted-foreground" />
                                 <Badge variant="outline" className="text-xs">
-                                  {product.commands?.length || 0}
+                                  {(product as Product).commands?.length ?? 0}
                                 </Badge>
                               </div>
                             </TableCell>
