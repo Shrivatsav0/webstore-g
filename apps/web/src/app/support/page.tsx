@@ -1,3 +1,4 @@
+// app/support/page.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -11,398 +12,433 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { ArrowRight, CheckCircle2, AlertTriangle, Wrench } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-
-import { siteConfig, footerData, supportData } from "../../../../../data/data";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  HelpCircle,
+  Mail,
+  Phone,
+  Clock,
+  MessageCircle,
+  Search,
+  Send,
+  CheckCircle,
+  ArrowRight,
+  Headphones,
+  FileText,
+  Users,
+  Zap,
+} from "lucide-react";
 import { Header } from "@/components/header";
-
-type StatusState = "operational" | "degraded" | "outage" | "maintenance";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
+import { useState, useMemo } from "react";
 
 export default function SupportPage() {
-  const HeroIcon = supportData.hero.badge.icon;
-  const SiteLogo = siteConfig.logo;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
-  const status = supportData.status as {
-    state: StatusState;
-    message: string;
-    lastUpdatedISO: string;
-  };
-  const statusStyles: Record<
-    StatusState,
-    { icon: React.ComponentType<any>; className: string; message: string }
-  > = {
-    operational: {
-      icon: CheckCircle2,
-      className:
-        "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-      message: "All systems operational. Instant delivery is online.",
-    },
-    degraded: {
-      icon: AlertTriangle,
-      className:
-        "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
-      message: "Service is experiencing degraded performance.",
-    },
-    outage: {
-      icon: AlertTriangle,
-      className:
-        "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30",
-      message: "We’re investigating an outage affecting some services.",
-    },
-    maintenance: {
-      icon: Wrench,
-      className:
-        "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
-      message: "Scheduled maintenance is in progress.",
-    },
+  // Queries
+  const supportConfigQuery = useQuery(
+    orpc.support.config.list.queryOptions({ context: {} })
+  );
+  const faqCategoriesQuery = useQuery(
+    orpc.support.faqCategories.list.queryOptions({ context: {} })
+  );
+  const faqsQuery = useQuery(
+    orpc.support.faqs.list.queryOptions({ context: {} })
+  );
+  const contactMethodsQuery = useQuery(
+    orpc.support.contactMethods.list.queryOptions({ context: {} })
+  );
+
+  const isLoading =
+    supportConfigQuery.isLoading ||
+    faqCategoriesQuery.isLoading ||
+    faqsQuery.isLoading ||
+    contactMethodsQuery.isLoading;
+
+  const error =
+    supportConfigQuery.error ||
+    faqCategoriesQuery.error ||
+    faqsQuery.error ||
+    contactMethodsQuery.error;
+
+  // Filter FAQs based on search and category
+  const filteredFaqs = useMemo(() => {
+    if (!faqsQuery.data) return [];
+
+    let filtered = faqsQuery.data.filter((faq: any) => faq.isActive);
+
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        (faq: any) => faq.categoryId === selectedCategory
+      );
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (faq: any) =>
+          faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [faqsQuery.data, searchQuery, selectedCategory]);
+
+  // Get icon component by name
+  const getIconComponent = (iconName: string) => {
+    const icons: { [key: string]: any } = {
+      HelpCircle,
+      Mail,
+      Phone,
+      MessageCircle,
+      Headphones,
+      FileText,
+      Users,
+      Zap,
+    };
+    return icons[iconName] || HelpCircle;
   };
 
-  const state = supportData.status.state as StatusState;
-  const StatusIcon = statusStyles[state].icon;
-  const statusClass = statusStyles[state].className;
-  const bannerMessage =
-    supportData.status.message?.trim() || statusStyles[state].message;
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        Failed to load support content
+      </div>
+    );
+  }
 
-  const onTicketSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // TODO: wire to your API route or 3rd-party form endpoint
-    // For now, noop + console
-    console.log("Ticket submitted (mock)");
-  };
+  const supportConfig = supportConfigQuery.data?.[0];
+  const categories =
+    faqCategoriesQuery.data?.filter((cat: any) => cat.isActive) || [];
+  const contactMethods =
+    contactMethodsQuery.data?.filter((method: any) => method.isActive) || [];
 
   return (
     <>
       <Header />
-      <div className="h-full bg-background text-foreground">
-        {/* Hero */}
+      <div className=" bg-background">
+        {/* Hero Section */}
         <section className="relative overflow-hidden py-20 lg:py-32">
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-muted/25 via-background to-background" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,theme(colors.primary/20),transparent_60%)] blur-3xl" />
-            <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)]">
-              <div className="size-full bg-[linear-gradient(to_right,theme(colors.border/40)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border/40)_1px,transparent_1px)] bg-[size:36px_36px]" />
-            </div>
-          </div>
-
           <div className="container relative mx-auto px-4">
             <div className="mx-auto max-w-4xl text-center">
-              <Badge
-                variant="secondary"
-                className="mb-6 backdrop-blur supports-[backdrop-filter]:bg-secondary/60"
-              >
-                {HeroIcon ? <HeroIcon className="mr-1 size-3" /> : null}
-                {supportData.hero.badge.text}
-              </Badge>
+              {isLoading ? (
+                <>
+                  <Skeleton className="mx-auto mb-4 h-10 w-3/4" />
+                  <Skeleton className="mx-auto mb-4 h-8 w-1/2" />
+                  <Skeleton className="mx-auto mb-8 h-5 w-2/3" />
+                </>
+              ) : (
+                <>
+                  <h1 className="mb-6 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl">
+                    <span className="bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent">
+                      {supportConfig?.heroTitle || "How can we help?"}
+                    </span>
+                  </h1>
+                  <h2 className="mb-4 text-xl text-muted-foreground md:text-2xl">
+                    {supportConfig?.heroSubtitle || "Get the support you need"}
+                  </h2>
+                  <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+                    {supportConfig?.heroDescription ||
+                      "Find answers to common questions or get in touch with our support team."}
+                  </p>
+                </>
+              )}
 
-              <h1 className="mb-6 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl">
-                <span className="bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent">
-                  {supportData.hero.title}
-                </span>
-                <span className="block text-muted-foreground">
-                  {supportData.hero.subtitle}
-                </span>
-              </h1>
-
-              <p className="mx-auto mb-10 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-                {supportData.hero.description}
-              </p>
-
-              <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                <Link href={supportData.hero.buttons.primaryHref}>
-                  <Button
-                    size="lg"
-                    className="px-8 text-lg shadow-sm transition-all duration-300 hover:shadow-md"
-                  >
-                    {supportData.hero.buttons.primary}
-                    <ArrowRight className="ml-2 size-5" />
-                  </Button>
-                </Link>
-                <Link href={supportData.hero.buttons.secondaryHref}>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="px-8 text-lg backdrop-blur supports-[backdrop-filter]:bg-background/40"
-                  >
-                    {supportData.hero.buttons.secondary}
-                  </Button>
-                </Link>
-              </div>
-
-              {supportData.hero.helperLinks?.length ? (
-                <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-                  {supportData.hero.helperLinks.map((l, i) => (
-                    <Link
-                      key={i}
-                      href={l.href}
-                      className="underline-offset-4 hover:text-foreground hover:underline"
-                    >
-                      {l.label}
-                    </Link>
-                  ))}
+              {/* Search Bar */}
+              {/* <div className="mx-auto mb-8 max-w-2xl">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search for answers..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-3 text-lg"
+                  />
                 </div>
-              ) : null}
+              </div> */}
             </div>
           </div>
         </section>
 
-        {/* Status banner */}
-        <section className="py-6">
+        {/* Quick Stats */}
+        <section className="py-12 border-y border-border/40">
           <div className="container mx-auto px-4">
-            <div
-              className={`flex items-center justify-between rounded-lg border px-4 py-3 ${statusClass}`}
-            >
-              <div className="flex items-center gap-3">
-                <StatusIcon className="size-5" />
-                <p className="font-medium">{bannerMessage}</p>
+            <div className="grid gap-8 md:grid-cols-3 text-center">
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {supportConfig?.responseTime || "< 24h"}
+                </div>
+                <p className="text-muted-foreground">Average Response Time</p>
               </div>
-              <span className="text-sm opacity-80">
-                Last updated:{" "}
-                {new Date(supportData.status.lastUpdatedISO).toLocaleString()}
-              </span>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {categories.length}
+                </div>
+                <p className="text-muted-foreground">Help Categories</p>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {supportConfig?.businessHours || "24/7"}
+                </div>
+                <p className="text-muted-foreground">Support Hours</p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* How it works */}
-        <section id="how-it-works" className="py-20">
+        {/* FAQ Categories */}
+        <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="mb-16 text-center">
               <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-                How It Works
+                Browse by Category
               </h2>
               <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                A quick overview of buying and delivery
+                Find answers organized by topic
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-              {supportData.howItWorks.map((step, index) => (
-                <Card
-                  key={index}
-                  className="group relative overflow-hidden border-border/50 transition-all duration-300 hover:shadow-lg"
-                >
-                  <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
-                  </div>
-                  <CardHeader>
-                    <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full border border-border/60 bg-background">
-                      <span className="text-sm font-semibold">{index + 1}</span>
-                    </div>
-                    <CardTitle className="text-center text-xl">
-                      {step.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center text-base">
-                      {step.description}
-                    </CardDescription>
-                  </CardContent>
+            {isLoading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Card key={i} className="p-6">
+                    <Skeleton className="mx-auto mb-4 h-12 w-12 rounded-full" />
+                    <Skeleton className="mx-auto mb-2 h-6 w-3/4" />
+                    <Skeleton className="mx-auto h-4 w-5/6" />
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {categories.map((category: any) => {
+                  const IconComponent = getIconComponent(category.icon);
+                  const categoryFaqCount =
+                    faqsQuery.data?.filter(
+                      (faq: any) =>
+                        faq.categoryId === category.id && faq.isActive
+                    ).length || 0;
+
+                  return (
+                    <Card
+                      key={category.id}
+                      className={`group cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                        selectedCategory === category.id
+                          ? "border-primary bg-primary/5"
+                          : "hover:border-primary/20"
+                      }`}
+                      onClick={() =>
+                        setSelectedCategory(
+                          selectedCategory === category.id ? null : category.id
+                        )
+                      }
+                    >
+                      <CardHeader className="text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                          <IconComponent className="h-8 w-8 text-primary" />
+                        </div>
+                        <CardTitle className="text-xl">
+                          {category.title}
+                        </CardTitle>
+                        <CardDescription className="text-base">
+                          {category.description}
+                        </CardDescription>
+                        <Badge variant="secondary" className="mx-auto w-fit">
+                          {categoryFaqCount} articles
+                        </Badge>
+                      </CardHeader>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* FAQs Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="mb-16 text-center">
+              <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+                Frequently Asked Questions
+              </h2>
+              {selectedCategory && (
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <span className="text-muted-foreground">
+                    Showing questions for:
+                  </span>
+                  <Badge variant="outline">
+                    {
+                      categories.find((cat: any) => cat.id === selectedCategory)
+                        ?.title
+                    }
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCategory(null)}
+                  >
+                    Clear filter
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="mx-auto max-w-4xl">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Card key={i} className="p-6">
+                      <Skeleton className="mb-2 h-6 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </Card>
+                  ))}
+                </div>
+              ) : filteredFaqs.length > 0 ? (
+                <Accordion type="single" collapsible className="space-y-4">
+                  {filteredFaqs.map((faq: any, index: number) => (
+                    <AccordionItem
+                      key={faq.id}
+                      value={`item-${index}`}
+                      className="rounded-lg border bg-background px-6 shadow-sm"
+                    >
+                      <AccordionTrigger className="text-left hover:no-underline">
+                        <span className="font-medium">{faq.question}</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground">
+                        <div className="prose prose-sm max-w-none">
+                          {faq.answer}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : (
+                <Card className="p-12 text-center">
+                  <HelpCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 text-xl font-semibold">
+                    No results found
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search or browse our categories above.
+                  </p>
                 </Card>
-              ))}
+              )}
             </div>
           </div>
         </section>
 
-        {/* Payments and Refunds */}
-        <section className="bg-muted/30 py-20">
+        {/* Contact Methods */}
+        {/* <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="mb-12 grid gap-8 lg:grid-cols-2">
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle>Payment Methods</CardTitle>
+            <div className="mb- text-center">
+              <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+                Still Need Help?
+              </h2>
+              <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                Get in touch with our support team
+              </p>
+            </div>
+
+            {isLoading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Card key={i} className="p-6">
+                    <Skeleton className="mx-auto mb-4 h-12 w-12 rounded-full" />
+                    <Skeleton className="mx-auto mb-2 h-6 w-3/4" />
+                    <Skeleton className="mx-auto mb-4 h-4 w-5/6" />
+                    <Skeleton className="mx-auto h-10 w-32" />
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {contactMethods.map((method: any) => {
+                  const IconComponent = getIconComponent(method.icon);
+                  return (
+                    <Card
+                      key={method.id}
+                      className="group transition-all duration-300 hover:shadow-lg hover:border-primary/20"
+                    >
+                      <CardHeader className="text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                          <IconComponent className="h-8 w-8 text-primary" />
+                        </div>
+                        <CardTitle className="text-xl">
+                          {method.title}
+                        </CardTitle>
+                        <CardDescription className="text-base">
+                          {method.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="text-center">
+                        <div className="mb-4 font-medium text-foreground">
+                          {method.contactInfo}
+                        </div>
+                        <Button className="w-full">
+                          Contact Us
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section> */}
+
+        {/* Contact Form */}
+        {/* <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-2xl">
+              <Card>
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">Send us a Message</CardTitle>
                   <CardDescription>
-                    Secure and widely supported options
+                    Can't find what you're looking for? Send us a message and
+                    we'll get back to you.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {supportData.paymentMethods.map((m, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border border-border/60 bg-background/60 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/40"
-                    >
-                      <div className="font-medium">{m.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {m.detail}
-                      </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium">Name</label>
+                      <Input placeholder="Your name" />
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle>Refunds</CardTitle>
-                  <CardDescription>Key points at a glance</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-foreground/90">
-                    {supportData.refunds.summary}
-                  </p>
-                  <Link href={supportData.refunds.ctaHref}>
-                    <Button variant="outline">
-                      {supportData.refunds.ctaLabel}
-                      <ArrowRight className="ml-2 size-4" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQs */}
-        <section id="faq" className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="mb-16 text-center">
-              <h2 className="mb-4 text-3xl font-bold md:text-4xl">FAQ</h2>
-              <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                Answers to common questions
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              {supportData.faqs.map((f, i) => (
-                <Card
-                  key={i}
-                  className="border-border/50 transition-all duration-300 hover:shadow-lg"
-                >
-                  <CardHeader>
-                    <CardTitle className="text-lg">{f.q}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">
-                      {f.a}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Contact / Ticket */}
-        <section id="contact" className="bg-muted/30 py-20">
-          <div className="container mx-auto px-4">
-            <div className="mx-auto max-w-3xl">
-              <div className="mb-10 text-center">
-                <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-                  {supportData.contact.ticket.title}
-                </h2>
-                <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                  {supportData.contact.ticket.description}
-                </p>
-              </div>
-
-              <Card className="border-border/50">
-                <CardContent className="pt-6">
-                  <form className="grid gap-4" onSubmit={onTicketSubmit}>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <Input
-                        required
-                        name="name"
-                        placeholder="Your name"
-                        aria-label="Your name"
-                      />
-                      <Input
-                        required
-                        name="email"
-                        type="email"
-                        placeholder="Email address"
-                        aria-label="Email address"
-                      />
+                    <div>
+                      <label className="text-sm font-medium">Email</label>
+                      <Input type="email" placeholder="your@email.com" />
                     </div>
-                    <Input
-                      required
-                      name="username"
-                      placeholder="Minecraft username"
-                      aria-label="Minecraft username"
-                    />
-                    <Input
-                      required
-                      name="orderId"
-                      placeholder="Order ID (e.g., BS-12345)"
-                      aria-label="Order ID"
-                    />
-                    <Textarea
-                      required
-                      name="message"
-                      placeholder="Describe the issue"
-                      aria-label="Describe the issue"
-                      className="min-h-[120px]"
-                    />
-                    <div className="flex items-center gap-3">
-                      <Button type="submit">
-                        Submit Ticket
-                        <ArrowRight className="ml-2 size-4" />
-                      </Button>
-                      <span className="text-sm text-muted-foreground">
-                        Average response time: under 24 hours
-                      </span>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <div className="mt-8 grid gap-4 md:grid-cols-2">
-                {supportData.contact.channels.map((c, i) => (
-                  <Link key={i} href={c.href}>
-                    <div className="rounded-lg border border-border/60 bg-background/60 p-4 transition-colors hover:bg-background">
-                      <div className="font-medium">{c.label}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {c.note}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer (matches landing) */}
-        <footer className="border-t border-border/40 py-16">
-          <div className="container mx-auto px-4">
-            <div className="mb-8 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  {SiteLogo ? <SiteLogo className="size-6" /> : null}
-                  <span className="text-xl font-bold">{siteConfig.name}</span>
-                </div>
-                <p className="text-muted-foreground">
-                  {siteConfig.description}
-                </p>
-              </div>
-              {footerData.sections.map((section, index) => (
-                <div key={index} className="space-y-4">
-                  <h3 className="font-semibold">{section.title}</h3>
-                  <div className="space-y-2">
-                    {section.links.map((link, linkIndex) => (
-                      <Link
-                        key={linkIndex}
-                        href={link.href}
-                        className="block text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
-            <Separator className="mb-8" />
-            <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-              <p className="text-muted-foreground">{footerData.copyright}</p>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground">
-                  {footerData.poweredBy}
-                </span>
-              </div>
+                  <div>
+                    <label className="text-sm font-medium">Subject</label>
+                    <Input placeholder="How can we help?" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Message</label>
+                    <Textarea
+                      placeholder="Describe your question or issue..."
+                      rows={5}
+                    />
+                  </div>
+                  <Button className="w-full">
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Message
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </footer>
+        </section> */}
       </div>
     </>
   );

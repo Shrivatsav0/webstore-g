@@ -5,6 +5,7 @@ import {
   IconChartBar,
   IconDashboard,
   IconHelp,
+  IconHelpCircle,
   IconListDetails,
   IconSearch,
   IconSettings,
@@ -44,6 +45,11 @@ const data = {
       title: "Categories",
       url: "/dashboard/categories",
       icon: IconChartBar,
+    },
+    {
+      title: "Support",
+      url: "/dashboard/support",
+      icon: IconHelpCircle,
     },
   ],
 

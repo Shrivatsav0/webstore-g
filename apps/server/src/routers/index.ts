@@ -12,6 +12,7 @@ import { imagesRoute } from "../lib/procedures/cloudinary";
 import { cartRoute } from "../lib/procedures/cart";
 import { checkoutRoute } from "../lib/procedures/checkout";
 import { mcUsersRoute } from "../lib/procedures/mcUsers";
+import { supportRoute } from "../lib/adminProcedures/support";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -36,6 +37,7 @@ export const appRouter = {
   cart: cartRoute,
   checkout: checkoutRoute,
   mcUsers: mcUsersRoute,
+  support: supportRoute,
   adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),
