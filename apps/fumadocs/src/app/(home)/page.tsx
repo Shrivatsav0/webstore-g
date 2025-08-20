@@ -15,7 +15,7 @@ export default function HomePage() {
 
       <div className="grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
         <Link
-          href="/docs/01-start-here/getting-started"
+          href="/docs/01-start-here/1.getting-started"
           className="group rounded-lg border border-border p-5 transition hover:bg-accent"
         >
           <div className="mb-2 inline-flex items-center gap-2 text-lg font-semibold">
@@ -26,7 +26,7 @@ export default function HomePage() {
           </p>
         </Link>
         <Link
-          href="/docs/01-start-here/deploy-vercel"
+          href="/docs/01-start-here/3.deploy-vercel"
           className="group rounded-lg border border-border p-5 transition hover:bg-accent"
         >
           <div className="mb-2 inline-flex items-center gap-2 text-lg font-semibold">
