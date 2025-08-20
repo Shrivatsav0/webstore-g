@@ -1,0 +1,45 @@
+---
+title: Deploy to Vercel
+description: Step-by-step guide to deploy both web and server on Vercel
+---
+
+See: Vercel automatically detects monorepos; you will create two projects.
+
+### Overview
+
+- Project 1: `apps/server` (API + auth)
+- Project 2: `apps/web` (storefront)
+
+### 1) Import Repository
+
+1. Push/fork your repo to Git provider.
+2. In Vercel → New Project → Import repository.
+
+### 2) Server Project
+
+- Root Directory: `apps/server`
+- Env Vars: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CORS_ORIGIN`, `LEMONSQUEEZY_*` (including `LEMONSQUEEZY_WEBHOOK_SECRET`), `CLOUDINARY_*`, `MINECRAFT_IP_PORT`, `MINECRAFT_SECRET_KEY`
+- Deploy and note Server URL.
+
+### 3) Web Project
+
+- Root Directory: `apps/web`
+- Env Vars: `NEXT_PUBLIC_SERVER_URL` → your Server URL
+- Deploy and note Web URL.
+
+### 4) Fix CORS
+
+- In Server project, set `CORS_ORIGIN` to your Web URL and redeploy.
+
+### 5) Migrations
+
+- Locally: set production `DATABASE_URL` and run `bun db:push`.
+
+### 6) Admin Access
+
+- Set admin IDs in `apps/server/src/lib/auth.ts` and redeploy, or read from env.
+
+### 7) Lemon Squeezy Webhook
+
+- In Lemon Squeezy dashboard, set Webhook URL to `https://<your-server-domain>/api/webhooks/lemonsqueezy`.
+- Copy the webhook secret and add it as `LEMONSQUEEZY_WEBHOOK_SECRET` in your server env.

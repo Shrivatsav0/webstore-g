@@ -1,0 +1,40 @@
+---
+title: Troubleshooting
+description: Common issues and fixes
+---
+
+### Web cannot reach server
+
+- Ensure `NEXT_PUBLIC_SERVER_URL` is set in `apps/web` to your server origin.
+- If deploying on Vercel, set `CORS_ORIGIN` on the server to your web origin and redeploy.
+
+### Auth not working
+
+- Verify `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` are set correctly.
+- Make sure your browser is sending cookies; the oRPC client sets `credentials: include`.
+
+### Database errors
+
+- Verify `DATABASE_URL` is valid.
+- Run `bun db:push` at the repo root to sync the schema.
+- Check that your Postgres instance accepts external connections (if using Neon, ensure the project is active).
+
+### Lemon Squeezy checkout fails
+
+- Ensure your Lemon Squeezy environment variables are set and the API key has the correct permissions.
+- Confirm that the Store and Generic Variant IDs match your Lemon Squeezy dashboard.
+
+### Images not uploading
+
+- Confirm Cloudinary credentials are set on the server.
+- Ensure you pass a valid base64 data URL (e.g., `data:image/png;base64,...`).
+
+---
+
+### Need more help?
+
+For API and setup issues, you can:
+- Contact **Millosaurs** on Discord
+- Join the [Millosaurs Support Discord](https://discord.gg/Pr3u5ArZfJ)
+
+⚠️ **Note:** Payment and billing-related issues are handled separately by **Gamestash**.

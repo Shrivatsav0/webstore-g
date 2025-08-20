@@ -1,0 +1,65 @@
+---
+title: Connect Minecraft Server
+description: Configure your Minecraft server plugin and server env so orders deliver commands
+---
+
+This template delivers commands to your Minecraft server after successful payment.
+
+### 1) Generate a strong secret
+
+Use the button below to create a secure secret and copy it. Paste the same value in both the server env and the plugin config.
+
+import SecretGenerator from "@/components/secret-generator";
+
+<SecretGenerator label="Generate Secret" bytes={32} />
+
+### 2) Server environment (apps/server/.env)
+
+```bash
+MINECRAFT_IP_PORT=66.66.66.66:8133   # Your public IP and port OPEN on firewall
+MINECRAFT_SECRET_KEY=your_generated_secret_here
+```
+
+- The app will call `http://MINECRAFT_IP_PORT/deliver` with header `Authorization: Bearer <MINECRAFT_SECRET_KEY>`.
+- Ensure the port is accessible from the internet (security group / firewall).
+
+### 3) Plugin configuration
+
+In your plugin config (included with this template), set the same port and secret:
+
+```yaml
+webstore:
+  port: 8133 # must match the port in MINECRAFT_IP_PORT
+  secret: your_generated_secret_here
+```
+
+The plugin will start an HTTP listener at `http://0.0.0.0:<port>/deliver` and verify the bearer token.
+
+### 4) Test the connection
+
+From your machine:
+
+```bash
+curl -X POST http://66.66.66.66:8133/deliver \
+  -H "Authorization: Bearer your_generated_secret_here" \
+  -H "Content-Type: application/json" \
+  -d '{"orderId":1,"minecraftUsername":"Steve","commands":["say Hello {user}"]}'
+```
+
+You should see a JSON response from the plugin.
+
+### 5) Production tips
+
+- Use a reverse proxy / firewall rules to limit access if desired.
+- Use a strong random secret.
+- Rotate the secret periodically and update both plugin and server env.
+
+### 6) Make yourself admin (manual)
+
+To access admin-only procedures, set your user role to `admin` in the database:
+
+```sql
+update "user" set role = 'admin' where email = 'you@example.com';
+```
+
+Sign out and sign back in after changing the role.

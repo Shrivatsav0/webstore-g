@@ -1,0 +1,83 @@
+---
+title: Environment & Running Locally
+description: Required environment variables and dev commands
+---
+
+### Monorepo Scripts (root)
+
+```bash
+bun install
+
+# Start all apps
+bun dev
+
+# Start only web
+bun dev:web
+
+# Start only server
+bun dev:server
+
+# Drizzle (server)
+bun db:push
+bun db:studio
+bun db:generate
+bun db:migrate
+```
+
+### Web (apps/web)
+
+Required:
+
+- NEXT_PUBLIC_SERVER_URL (e.g., http://localhost:3000)
+
+Notes:
+
+- Web runs on port 3001 by default (next dev --port=3001).
+- oRPC client and Better Auth client both point to NEXT_PUBLIC_SERVER_URL.
+
+### Server (apps/server)
+
+Required:
+
+- DATABASE_URL
+- BETTER_AUTH_SECRET
+- BETTER_AUTH_URL (server origin; used by Better Auth)
+- CORS_ORIGIN (e.g., http://localhost:3001)
+- LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, LEMONSQUEEZY_GENERIC_VARIANT_ID
+
+Optional:
+
+- NEXT_PUBLIC_APP_WEB_URL or WEB_APP_URL (used for success redirect fallback)
+
+Images (Cloudinary, required for image uploads):
+
+- CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+
+### How to get each key (step-by-step)
+
+1. Postgres `DATABASE_URL`
+
+- Use Neon (free): create project → create database → copy the connection string (PostgreSQL protocol). It looks like `postgres://user:pass@host/db`.
+
+2. Better Auth
+
+- `BETTER_AUTH_SECRET`: generate a random 32+ char string (e.g., `openssl rand -base64 32`).
+- `BETTER_AUTH_URL`: your server origin, e.g., `http://localhost:3000` locally, or `https://your-server.vercel.app` in production.
+
+3. CORS
+
+- `CORS_ORIGIN`: your web origin, e.g., `http://localhost:3001` locally, or `https://your-web.vercel.app` on Vercel.
+
+4. Lemon Squeezy (required for checkout)
+
+- Create a Lemon Squeezy account → Settings → API → generate `LEMONSQUEEZY_API_KEY`.
+- Create a Store → get `LEMONSQUEEZY_STORE_ID` from the store settings.
+- Create a “Generic” product/variant and note its ID as `LEMONSQUEEZY_GENERIC_VARIANT_ID`.
+- Webhook (required for auto-delivery): set the webhook to `https://<your-server-domain>/api/webhooks/lemonsqueezy` and add `LEMONSQUEEZY_WEBHOOK_SECRET` in server env (copy from Lemon Squeezy Webhooks).
+
+5. Cloudinary (required for admin image upload)
+
+- Create a Cloudinary account. Dashboard shows the following values:
+  - `CLOUD_NAME` → `CLOUDINARY_CLOUD_NAME`
+  - `API Key` → `CLOUDINARY_API_KEY`
+  - `API Secret` → `CLOUDINARY_API_SECRET`

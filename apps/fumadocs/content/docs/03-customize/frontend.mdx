@@ -1,0 +1,52 @@
+---
+title: Frontend (apps/web)
+description: Next.js storefront and oRPC client usage
+---
+
+### Stack
+
+- Next.js App Router, React 19, TypeScript
+- TailwindCSS v4, shadcn/ui, lucide-react
+- State: Zustand (`stores/cart.ts`) for cart session and state
+- Data: TanStack Query + `@orpc/tanstack-query`
+
+### oRPC Client
+
+`src/utils/orpc.ts` configures a fetch link to the server:
+
+```ts
+const link = new RPCLink({
+  url: `${process.env.NEXT_PUBLIC_SERVER_URL}/rpc`,
+  fetch(url, options) {
+    return fetch(url, { ...options, credentials: "include" });
+  },
+});
+export const client = createORPCClient(link);
+export const orpc = createTanstackQueryUtils(client);
+```
+
+Use `orpc.<router>.<procedure>.queryOptions/mutationOptions` with TanStack Query.
+
+### Cart Session and Minecraft Username
+
+- `stores/cart.ts` manages a `sessionId` persisted client-side.
+- `hooks/use-minecraft-user.ts` reads `mcUsers.get` and `mcUsers.validateForCheckout`.
+- `components/cart/add-to-cart-button.tsx` ensures a Minecraft username is set before adding to cart, showing `MinecraftUsernameModal` when missing.
+
+### Pages
+
+- Catalog browsing: `app/categories`, product detail nested routes.
+- Checkout success: `app/checkout/success` reads order details and can clear cart post-payment via `cart.clearAfterOrder`.
+- Dashboard pages for managing landing data/support (admin-only flows call admin procedures).
+
+### Auth Client
+
+`src/lib/auth-client.ts` uses Better Auth React client:
+
+```ts
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_SERVER_URL,
+});
+```
+
+Ensure the server origin is set in `NEXT_PUBLIC_SERVER_URL` for both oRPC and auth.

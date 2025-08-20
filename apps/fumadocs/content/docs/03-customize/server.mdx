@@ -1,0 +1,34 @@
+---
+title: Server (apps/server)
+description: Next.js API with oRPC, Better Auth, Drizzle ORM
+---
+
+### Architecture
+
+- Next.js Route Handler at `/rpc` uses `@orpc/server/fetch` to expose `appRouter`.
+- Context (`lib/context.ts`) loads Better Auth session from request headers.
+- Auth setup in `lib/auth.ts` with Drizzle adapter, Admin plugin, secure cookies.
+- Database via Drizzle ORM and Postgres; schemas in `src/db/schema/*`.
+
+### Router
+
+- Root router in `src/routers/index.ts` composes modules:
+  - Public: `healthCheck`, `users`
+  - Protected: `privateData`
+  - Admin: `siteConfig`, `heroConfig`, `featuresConfig`, `categories`, `products`, `support`, `images`
+  - Commerce: `cart`, `checkout`
+  - Minecraft: `mcUsers`
+
+### Checkout
+
+- `lib/procedures/checkout.ts` creates orders, order items, and a Lemon Squeezy checkout with dynamic product details.
+- Requires a valid Minecraft username in `mc_users` for the `sessionId` before checkout.
+
+### Environment
+
+Required for server:
+
+- `DATABASE_URL`
+- `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CORS_ORIGIN`
+- `LEMONSQUEEZY_API_KEY`, `LEMONSQUEEZY_STORE_ID`, `LEMONSQUEEZY_GENERIC_VARIANT_ID`
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`

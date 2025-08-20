@@ -1,0 +1,73 @@
+---
+title: API Reference
+description: oRPC endpoints exposed by apps/server
+---
+
+The server exposes a single HTTP endpoint at `/rpc` that serves a typed oRPC router. Below is a high-level map of procedures grouped by area. All inputs are validated with Zod on the server.
+
+### Conventions
+
+- Base URL: set `NEXT_PUBLIC_SERVER_URL` in the web app to the server origin (e.g., `http://localhost:3000`).
+- Auth: procedures wrapped in `protectedProcedure` or `adminProcedure` require a logged-in user or admin respectively. Sessions are read via Better Auth cookies.
+
+### Health & Session
+
+- `healthCheck() → "OK"`
+- `privateData() → { message, user }` (auth required)
+
+### Site Configuration
+
+- `siteConfig.list() → SiteConfig[]`
+- `siteConfig.upsert(input) → SiteConfig` (admin)
+
+### Hero & Features
+
+- `heroConfig.list() → Hero[]`
+- `heroConfig.upsert(input) → Hero` (admin)
+- `featuresConfig.list() → Feature[]`
+- `featuresConfig.upsert(input[]) → Feature[]` (admin)
+
+### Catalog: Categories
+
+- `categories.list()` / `categories.get({ id })`
+- `categories.create(input)` / `categories.update({ id, ... })` / `categories.delete({ id })` (admin)
+
+### Catalog: Products
+
+- `products.list({ page?, limit?, categoryId?, search?, isActive? }) → { data, pagination }`
+- `products.get({ id })`
+- `products.create/update/delete` (admin)
+
+### Images (Cloudinary)
+
+- `images.upload({ file, folder?, filename? })` (admin)
+- `images.delete({ public_id })` (admin)
+
+### Cart
+
+- `cart.get({ sessionId, userId? })`
+- `cart.add({ sessionId, productId, quantity? })`
+- `cart.update({ sessionId, itemId, quantity })`
+- `cart.remove({ sessionId, itemId })`
+- `cart.clear({ sessionId, orderId?, force? })`
+- `cart.getForOrder({ sessionId })`
+- `cart.clearAfterOrder({ sessionId, orderId, waitForCompletion? })`
+
+### Minecraft Users
+
+- `mcUsers.get({ sessionId, userId? })`
+- `mcUsers.setUsername({ sessionId, minecraftUsername })`
+- `mcUsers.validateForCheckout({ sessionId })`
+
+### Checkout / Orders
+
+- `checkout.create({ sessionId, userId?, customerEmail?, customerName?, redirectUrl? })`
+- `checkout.getOrder({ orderId })`
+- `checkout.getOrderBySession({ sessionId })`
+
+### Support Content (Admin)
+
+- `support.config.list()` / `support.config.upsert(input)`
+- `support.faqCategories.list()` / `support.faqCategories.upsert(input)` / `support.faqCategories.delete({ id })`
+- `support.faqs.list()` / `support.faqs.upsert(input)` / `support.faqs.delete({ id })`
+- `support.contactMethods.list()` / `support.contactMethods.upsert(input)`

@@ -1,0 +1,78 @@
+---
+title: Getting Started
+description: Install, run, and configure
+---
+
+## Prerequisites
+
+- Bun 1.2+
+- PostgreSQL (Neon/Local/Render/Any Postgres)
+
+## Install
+
+Clone the repository and install dependencies:
+
+```bash
+git clone <your-fork-or-repo-url> webstore
+cd webstore
+bun install
+```
+
+## Environment
+
+Create server `.env` with the following keys (see Environment page for how to get them):
+
+```bash
+# apps/server
+DATABASE_URL=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3001
+LEMONSQUEEZY_API_KEY=
+LEMONSQUEEZY_STORE_ID=
+LEMONSQUEEZY_GENERIC_VARIANT_ID=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+Create web `.env`:
+
+```bash
+# apps/web
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+```
+
+## Database (optional)
+
+```bash
+bun db:push
+```
+
+## Run
+
+- All apps:
+
+```bash
+bun dev
+```
+
+- Web only:
+
+```bash
+bun dev:web
+```
+
+- Server only:
+
+```bash
+bun dev:server
+```
+
+Web: http://localhost:3001
+API: http://localhost:3000
+
+## Next Steps
+
+- Populate categories/products via admin APIs or seed.
+- Configure Cloudinary and Lemon Squeezy to enable images and checkout.

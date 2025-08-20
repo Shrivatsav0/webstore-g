@@ -1,0 +1,39 @@
+---
+title: Customize Your Store
+description: Change branding, content, categories/products, and images
+---
+
+### Branding & Site Config
+
+- Use admin procedures to upsert site, hero, and features content:
+  - `siteConfig.upsert`
+  - `heroConfig.upsert`
+  - `featuresConfig.upsert`
+- Or build an admin UI calling these endpoints.
+
+### Categories & Products
+
+- Create/update categories with `categories.create/update`.
+- Create/update products with `products.create/update`.
+- Images can be uploaded via `images.upload` (Cloudinary required).
+
+### Images (Cloudinary)
+
+1. Get Cloudinary credentials (see Environment page).
+2. Call `images.upload({ file: base64, folder?, filename? })` from an admin screen.
+3. Store the returned `url` in your product or category.
+
+### Support Content
+
+- Use `support.config.upsert` to set hero/contact info.
+- Manage FAQs via `support.faqCategories.*` and `support.faqs.*`.
+
+### UI Components
+
+- Modify components under `apps/web/src/components` and pages under `apps/web/src/app`.
+- Tailwind styles live in `apps/web/src/index.css` and configured via Tailwind v4.
+
+### Safety Tips
+
+- Always run on a staging environment first.
+- Lock down admin procedures with Better Auth admin roles.
