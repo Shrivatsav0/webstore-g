@@ -84,10 +84,9 @@ export default function CategoryPage() {
     if (!productsData?.data) return [];
 
     let filtered = productsData.data.filter((product) => {
-      const matchesStock = !onlyInStock || (product.stock && product.stock > 0);
       const matchesPrice =
         product.price >= priceRange[0] && product.price <= priceRange[1];
-      return matchesStock && matchesPrice;
+      return matchesPrice;
     });
 
     // Sort products
@@ -333,16 +332,6 @@ export default function CategoryPage() {
 
           {/* Simple filters */}
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="in-stock"
-                checked={onlyInStock}
-                onCheckedChange={(v) => setOnlyInStock(Boolean(v))}
-              />
-              <label htmlFor="in-stock" className="text-sm">
-                In stock only
-              </label>
-            </div>
 
             {productsData?.data?.length && (
               <div className="flex items-center gap-3">
@@ -426,15 +415,6 @@ function CategoryGrid({ products }: { products: any[] }) {
                   </Badge>
                 )}
               </div>
-              {!p.stock || p.stock === 0 ? (
-                <Badge className="bg-muted text-muted-foreground backdrop-blur">
-                  Out of stock
-                </Badge>
-              ) : p.stock < 10 ? (
-                <Badge className="bg-orange-500/80 text-white backdrop-blur">
-                  Low stock
-                </Badge>
-              ) : null}
             </div>
 
             <div className="absolute inset-x-4 bottom-4 z-10">
@@ -453,17 +433,12 @@ function CategoryGrid({ products }: { products: any[] }) {
 
                 <div className="mt-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {p.stock && (
-                      <span className="text-xs text-muted-foreground">
-                        {p.stock} in stock
-                      </span>
-                    )}
                   </div>
 
                   <div className="relative z-20 flex items-center gap-2">
                     <Button
                       size="sm"
-                      disabled={!p.stock || p.stock === 0}
+                      disabled={false}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();

@@ -247,15 +247,6 @@ export default function ProductDetailPage() {
                       {category.title}
                     </Badge>
                   )}
-                  {!product.stock || product.stock === 0 ? (
-                    <Badge className="bg-muted text-muted-foreground">
-                      Out of stock
-                    </Badge>
-                  ) : product.stock < 10 ? (
-                    <Badge className="bg-orange-500/80 text-white">
-                      Low stock
-                    </Badge>
-                  ) : null}
                 </div>
               </div>
 
@@ -310,28 +301,14 @@ export default function ProductDetailPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-foreground/80">Stock</span>
-                    <span className="text-xs text-foreground/80">
-                      {product.stock || 0} available
-                    </span>
-                  </div>
+
 
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-foreground/80">
                       Availability
                     </span>
-                    <span
-                      className={cn(
-                        "text-xs",
-                        product.stock && product.stock > 0
-                          ? "text-emerald-400"
-                          : "text-foreground/70"
-                      )}
-                    >
-                      {product.stock && product.stock > 0
-                        ? "In stock"
-                        : "Out of stock"}
+                    <span className="text-xs text-emerald-400">
+                      Available
                     </span>
                   </div>
                 </CardContent>
@@ -349,7 +326,7 @@ export default function ProductDetailPage() {
                   </Button>
                   <AddToCartButton
                     productId={product.id}
-                    disabled={!product.stock || product.stock === 0}
+                    disabled={false}
                     className="relative z-20"
                   />
                 </CardFooter>
@@ -372,7 +349,6 @@ export default function ProductDetailPage() {
                       <h3 className="mb-2 text-sm font-medium">Key details</h3>
                       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                         <li>Category: {category?.title || "Unknown"}</li>
-                        <li>Stock: {product.stock || 0} available</li>
                         <li>Price: {formatCents(product.price)}</li>
                         <li>
                           Status: {product.isActive ? "Active" : "Inactive"}

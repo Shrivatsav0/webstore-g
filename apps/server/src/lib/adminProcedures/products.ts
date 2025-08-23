@@ -49,6 +49,8 @@ export const listProducts = os
           image: products.image,
           stock: products.stock,
           isActive: products.isActive,
+          categoryId: products.categoryId,
+          commands: products.commands,
           createdAt: products.createdAt,
           updatedAt: products.updatedAt,
           category: {

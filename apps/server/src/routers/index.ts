@@ -25,6 +25,7 @@ export const appRouter = {
       user: context.session?.user,
     };
   }),
+  publicProcedure: publicProcedure,
   users: publicProcedure.handler(async () => {
     return db.select().from(user);
   }),

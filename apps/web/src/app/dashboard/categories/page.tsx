@@ -83,10 +83,10 @@ type Product = {
   description: string;
   price: number;
   image?: string | null;
-  stock: number | null;
+  stock?: number | null;
   isActive: boolean | null;
   categoryId: number;
-  commands?: string[];
+  commands?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   category: {
@@ -116,7 +116,6 @@ const productSchema = z.object({
   price: z.number().min(0, "Price must be positive"),
   image: z.string().url("Invalid image URL").optional(),
   categoryId: z.number().min(1, "Category is required"),
-  stock: z.number().min(0, "Stock must be non-negative").default(0),
   isActive: z.boolean().default(true),
   commands: z
     .array(z.string().min(1, "Command cannot be empty"))
@@ -161,7 +160,6 @@ export default function CategoriesProductsDashboard() {
     price: 0,
     image: "",
     categoryId: 0,
-    stock: 0,
     isActive: true,
     commands: [] as string[],
   });
@@ -318,7 +316,6 @@ export default function CategoriesProductsDashboard() {
       price: 0,
       image: "",
       categoryId: 0,
-      stock: 0,
       isActive: true,
       commands: [],
     });
@@ -344,7 +341,6 @@ export default function CategoriesProductsDashboard() {
       price: product.price,
       image: product.image || "",
       categoryId: product.categoryId,
-      stock: product.stock || 0,
       isActive: product.isActive ?? true,
       commands: product.commands || [],
     });
@@ -414,10 +410,7 @@ export default function CategoriesProductsDashboard() {
     const activeProducts =
       productsData?.data.filter((p) => p.isActive).length || 0;
     const totalValue =
-      productsData?.data.reduce(
-        (sum, p) => sum + p.price * (p.stock || 0),
-        0
-      ) || 0;
+      productsData?.data.reduce((sum, p) => sum + p.price, 0) || 0;
 
     return {
       totalCategories,
@@ -1359,7 +1352,6 @@ export default function CategoriesProductsDashboard() {
                           <TableHead>Product</TableHead>
                           <TableHead>Category</TableHead>
                           <TableHead>Price</TableHead>
-                          <TableHead>Stock</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                           <TableHead>Commands</TableHead>
@@ -1392,17 +1384,6 @@ export default function CategoriesProductsDashboard() {
                             </TableCell>
                             <TableCell>
                               ${(product.price / 100).toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  (product.stock || 0) > 0
-                                    ? "default"
-                                    : "destructive"
-                                }
-                              >
-                                {product.stock || 0}
-                              </Badge>
                             </TableCell>
                             <TableCell>
                               <Badge

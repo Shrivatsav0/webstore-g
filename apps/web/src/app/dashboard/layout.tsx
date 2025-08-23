@@ -27,6 +27,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: false,
   });
 
+  const publicProcedure = useQuery({
+    ...orpc.publicProcedure.queryOptions({ context: {} }),
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+  });
+
   if (adminCheck.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
