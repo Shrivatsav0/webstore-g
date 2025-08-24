@@ -1019,279 +1019,264 @@ export default function CategoriesProductsDashboard() {
                       Add Product
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90vh]">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {editingProduct ? "Edit Product" : "Add Product"}
-                      </DialogTitle>
-                      <DialogDescription>
-                        {editingProduct
-                          ? "Update the product details below."
-                          : "Fill in the details to create a new product."}
-                      </DialogDescription>
-                    </DialogHeader>
+                    <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90vh] overflow-hidden">
+                        <DialogHeader>
+                            <DialogTitle>
+                                {editingProduct ? "Edit Product" : "Add Product"}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {editingProduct
+                                    ? "Update the product details below."
+                                    : "Fill in the details to create a new product."}
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    {/* Scrollable content */}
-                    <div className="flex-1 overflow-y-auto pr-1 space-y-6 py-4">
-                      {/* BASIC INFO */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-                          Basic Information
-                        </h4>
-                        <div className="grid gap-2">
-                          <Label htmlFor="name">Name</Label>
-                          <Input
-                            id="name"
-                            value={productForm.name}
-                            onChange={(e) =>
-                              setProductForm({
-                                ...productForm,
-                                name: e.target.value,
-                              })
-                            }
-                            placeholder="Product name"
-                          />
-                        </div>
-                        <div className="grid gap-2 mt-3">
-                          <Label htmlFor="description">Description</Label>
-                          <Textarea
-                            id="description"
-                            value={productForm.description}
-                            onChange={(e) =>
-                              setProductForm({
-                                ...productForm,
-                                description: e.target.value,
-                              })
-                            }
-                            placeholder="Product description"
-                          />
-                        </div>
-                      </div>
-
-                      {/* PRICING */}
-                      <div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="price">Price</Label>
-                          <div className="relative">
-                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                              $
-                            </span>
-                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
-                              USD
-                            </span>
-                            <Input
-                              id="price"
-                              type="number"
-                              inputMode="decimal"
-                              step="0.01"
-                              min={0}
-                              className="pl-8 pr-10"
-                              value={(productForm.price / 100).toFixed(2)}
-                              onChange={(e) => {
-                                const raw = e.target.value;
-                                if (raw.trim() === "") {
-                                  setProductForm({
-                                    ...productForm,
-                                    price: 0,
-                                  });
-                                  return;
-                                }
-                                const num = Number.parseFloat(raw);
-                                const clamped = Number.isFinite(num)
-                                  ? Math.max(0, num)
-                                  : 0;
-                                setProductForm({
-                                  ...productForm,
-                                  price: Math.round(clamped * 100),
-                                });
-                              }}
-                              placeholder="0.00"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* MINECRAFT COMMANDS - NEW SECTION */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                          <Terminal className="size-4" />
-                          Minecraft Commands
-                        </h4>
-                        <p className="text-xs text-muted-foreground mb-3">
-                          Commands to execute when this product is purchased.
-                          Use {"{user}"} as placeholder for the Minecraft
-                          username.
-                        </p>
-
-                        {/* Command Input */}
-                        <div className="flex gap-2 mb-3">
-                          <Input
-                            value={newCommand}
-                            onChange={(e) => setNewCommand(e.target.value)}
-                            placeholder="e.g., lp {user} parent set vip"
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addCommand();
-                              }
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            onClick={addCommand}
-                            disabled={!newCommand.trim()}
-                            size="sm"
-                          >
-                            <Plus className="size-4" />
-                          </Button>
-                        </div>
-
-                        {/* Commands List */}
-                        {productForm.commands.length > 0 && (
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium">
-                              Commands to execute:
-                            </Label>
-                            <div className="space-y-1 max-h-32 overflow-y-auto">
-                              {productForm.commands.map((command, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm"
-                                >
-                                  <Terminal className="size-3 text-muted-foreground flex-shrink-0" />
-                                  <code className="flex-1 font-mono text-xs">
-                                    {command}
-                                  </code>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeCommand(index)}
-                                    className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
-                                  >
-                                    <X className="size-3" />
-                                  </Button>
+                        <div className="flex-1 overflow-y-auto pr-1 space-y-6 py-4">
+                            {/* BASIC INFO */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+                                    Basic Information
+                                </h4>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="name">Name</Label>
+                                    <Input
+                                        id="name"
+                                        value={productForm.name}
+                                        onChange={(e) =>
+                                            setProductForm({
+                                                ...productForm,
+                                                name: e.target.value,
+                                            })
+                                        }
+                                        placeholder="Product name"
+                                    />
                                 </div>
-                              ))}
+                                <div className="grid gap-2 mt-3">
+                                    <Label htmlFor="description">Description</Label>
+                                    <Textarea
+                                        id="description"
+                                        value={productForm.description}
+                                        onChange={(e) =>
+                                            setProductForm({
+                                                ...productForm,
+                                                description: e.target.value,
+                                            })
+                                        }
+                                        placeholder="Product description"
+                                    />
+                                </div>
                             </div>
-                          </div>
-                        )}
 
-                        {productForm.commands.length === 0 && (
-                          <div className="text-center py-4 text-muted-foreground text-sm border-2 border-dashed rounded">
-                            No commands added yet. Add commands that will be
-                            executed when this product is purchased.
-                          </div>
-                        )}
-                      </div>
+                            {/* PRICING */}
+                            <div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="price">Price</Label>
+                                    <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+            $
+          </span>
+                                        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+            USD
+          </span>
+                                        <Input
+                                            id="price"
+                                            type="number"
+                                            inputMode="decimal"
+                                            step="0.01"
+                                            min={0}
+                                            className="pl-8 pr-10"
+                                            value={(productForm.price / 100).toFixed(2)}
+                                            onChange={(e) => {
+                                                const raw = e.target.value;
+                                                if (raw.trim() === "") {
+                                                    setProductForm({
+                                                        ...productForm,
+                                                        price: 0,
+                                                    });
+                                                    return;
+                                                }
+                                                const num = Number.parseFloat(raw);
+                                                const clamped = Number.isFinite(num) ? Math.max(0, num) : 0;
+                                                setProductForm({
+                                                    ...productForm,
+                                                    price: Math.round(clamped * 100),
+                                                });
+                                            }}
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
 
-                      {/* CATEGORY */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-                          Category
-                        </h4>
-                        <Select
-                          value={
-                            productForm.categoryId
-                              ? productForm.categoryId.toString()
-                              : undefined
-                          }
-                          onValueChange={(value) =>
-                            setProductForm({
-                              ...productForm,
-                              categoryId: parseInt(value),
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories?.map((category) => (
-                              <SelectItem
-                                key={category.id}
-                                value={category.id.toString()}
-                              >
-                                {category.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                            {/* MINECRAFT COMMANDS */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                                    <Terminal className="size-4" />
+                                    Minecraft Commands
+                                </h4>
+                                <p className="text-xs text-muted-foreground mb-3">
+                                    Commands to execute when this product is purchased. Use {"{user}"} as
+                                    placeholder for the Minecraft username.
+                                </p>
 
-                        {categories?.length === 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => {
-                              setProductDialogOpen(false);
-                              setActiveTab("categories");
-                              setCategoryDialogOpen(true);
-                            }}
-                          >
-                            <Plus className="size-3 mr-1" /> Create Category
-                          </Button>
-                        )}
-                      </div>
+                                {/* Command Input */}
+                                <div className="flex gap-2 mb-3">
+                                    <Input
+                                        value={newCommand}
+                                        onChange={(e) => setNewCommand(e.target.value)}
+                                        placeholder="e.g., lp {user} parent set vip"
+                                        onKeyPress={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                addCommand();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={addCommand}
+                                        disabled={!newCommand.trim()}
+                                        size="sm"
+                                    >
+                                        <Plus className="size-4" />
+                                    </Button>
+                                </div>
 
-                      {/* IMAGE UPLOAD */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-                          Product Image
-                        </h4>
-                        <ImageUpload
-                          value={productForm.image}
-                          onChange={(url) =>
-                            setProductForm({
-                              ...productForm,
-                              image: url,
-                            })
-                          }
-                          onRemove={() =>
-                            setProductForm({
-                              ...productForm,
-                              image: "",
-                            })
-                          }
-                          folder="products"
-                        />
-                      </div>
+                                {/* Commands List */}
+                                {productForm.commands.length > 0 && (
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-medium">Commands to execute:</Label>
+                                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                                            {productForm.commands.map((command, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm"
+                                                >
+                                                    <Terminal className="size-3 text-muted-foreground flex-shrink-0" />
+                                                    <code className="flex-1 font-mono text-xs">{command}</code>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => removeCommand(index)}
+                                                        className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                                    >
+                                                        <X className="size-3" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-                      {/* STATUS */}
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="isActive"
-                          checked={productForm.isActive}
-                          onChange={(e) =>
-                            setProductForm({
-                              ...productForm,
-                              isActive: e.target.checked,
-                            })
-                          }
-                        />
-                        <Label htmlFor="isActive">Active</Label>
-                      </div>
-                    </div>
+                                {productForm.commands.length === 0 && (
+                                    <div className="text-center py-4 text-muted-foreground text-sm border-2 border-dashed rounded">
+                                        No commands added yet. Add commands that will be executed when this
+                                        product is purchased.
+                                    </div>
+                                )}
+                            </div>
 
-                    {/* Sticky footer */}
-                    <DialogFooter className="border-t pt-3 bg-background sticky bottom-0">
-                      <Button
-                        type="submit"
-                        onClick={handleProductSubmit}
-                        disabled={
-                          createProductMutation.isPending ||
-                          updateProductMutation.isPending
-                        }
-                      >
-                        {(createProductMutation.isPending ||
-                          updateProductMutation.isPending) && (
-                          <Loader2 className="size-4 mr-2 animate-spin" />
-                        )}
-                        {editingProduct ? "Update Product" : "Create Product"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
+                            {/* CATEGORY */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+                                    Category
+                                </h4>
+                                <Select
+                                    value={
+                                        productForm.categoryId ? productForm.categoryId.toString() : undefined
+                                    }
+                                    onValueChange={(value) =>
+                                        setProductForm({
+                                            ...productForm,
+                                            categoryId: parseInt(value),
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories?.map((category) => (
+                                            <SelectItem key={category.id} value={category.id.toString()}>
+                                                {category.title}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                {categories?.length === 0 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-2"
+                                        onClick={() => {
+                                            setProductDialogOpen(false);
+                                            setActiveTab("categories");
+                                            setCategoryDialogOpen(true);
+                                        }}
+                                    >
+                                        <Plus className="size-3 mr-1" /> Create Category
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* IMAGE UPLOAD */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+                                    Product Image
+                                </h4>
+                                <ImageUpload
+                                    value={productForm.image}
+                                    onChange={(url) =>
+                                        setProductForm({
+                                            ...productForm,
+                                            image: url,
+                                        })
+                                    }
+                                    onRemove={() =>
+                                        setProductForm({
+                                            ...productForm,
+                                            image: "",
+                                        })
+                                    }
+                                    folder="products"
+                                />
+                            </div>
+
+                            {/* STATUS */}
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="isActive"
+                                    checked={productForm.isActive}
+                                    onChange={(e) =>
+                                        setProductForm({
+                                            ...productForm,
+                                            isActive: e.target.checked,
+                                        })
+                                    }
+                                />
+                                <Label htmlFor="isActive">Active</Label>
+                            </div>
+                        </div>
+
+                        <DialogFooter className="border-t pt-3 bg-background">
+                            <Button
+                                type="submit"
+                                onClick={handleProductSubmit}
+                                disabled={
+                                    createProductMutation.isPending || updateProductMutation.isPending
+                                }
+                            >
+                                {(createProductMutation.isPending ||
+                                    updateProductMutation.isPending) && (
+                                    <Loader2 className="size-4 mr-2 animate-spin" />
+                                )}
+                                {editingProduct ? "Update Product" : "Create Product"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
                 </Dialog>
               </div>
 

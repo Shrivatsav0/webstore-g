@@ -10,28 +10,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star, ArrowRight, Sparkles, Zap, Shield, Truck } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
-import {
-  heroData,
-  stats,
-  testimonials,
-  newsletter,
-  footerData,
-  siteConfig,
-} from "../../../../data/data";
 import { Header } from "@/components/header";
-import { CategoriesSection } from "@/components/landing/category-section"; // Import the new component
+import { CategoriesSection } from "@/components/landing/category-section";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/utils/orpc";
 import { useEffect, useState } from "react";
 
 export default function LandingPage() {
-  const SiteLogo = siteConfig.logo;
+
 
   const heroQuery = useQuery(
     orpc.heroConfig.list.queryOptions({ context: {} })
@@ -135,19 +125,7 @@ export default function LandingPage() {
                         </Link>
                       </div>
 
-                      {heroData.helperLinks?.length ? (
-                        <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-                          {heroData.helperLinks.map((l: any, i: number) => (
-                            <Link
-                              key={i}
-                              href={l.href}
-                              className="underline-offset-4 hover:text-foreground hover:underline"
-                            >
-                              {l.label}
-                            </Link>
-                          ))}
-                        </div>
-                      ) : null}
+
                     </>
                   )}
                 </div>
@@ -219,10 +197,9 @@ export default function LandingPage() {
                 <div className="mb-8 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
                   <div className="space-y-4">
                     <div className="flex items-center space-x-2">
-                      {SiteLogo ? <SiteLogo className="size-6" /> : null}
+
                       <span className="text-xl font-bold">
-                        {siteConfigQuery.data?.[0]?.headerLogoText ||
-                          siteConfig.name}
+                        {siteConfigQuery.data?.[0]?.headerLogoText}
                       </span>
                     </div>
                     {isFooterLoading ? (
@@ -233,8 +210,7 @@ export default function LandingPage() {
                       </div>
                     ) : (
                       <p className="text-muted-foreground">
-                        {siteConfigQuery.data?.[0]?.footerDescription ||
-                          footerData.description}
+                        {siteConfigQuery.data?.[0]?.footerDescription }
                       </p>
                     )}
                   </div>
@@ -251,13 +227,11 @@ export default function LandingPage() {
                   ) : (
                     <>
                       <p className="text-muted-foreground">
-                        {siteConfigQuery.data?.[0]?.footerCopyright ||
-                          footerData.copyright}
+                        {siteConfigQuery.data?.[0]?.footerCopyright }
                       </p>
                       <div className="flex items-center space-x-4">
                         <span className="text-sm text-muted-foreground">
-                          {siteConfigQuery.data?.[0]?.footerPoweredBy ||
-                            footerData.poweredBy}
+                          {siteConfigQuery.data?.[0]?.footerPoweredBy }
                         </span>
                       </div>
                     </>
