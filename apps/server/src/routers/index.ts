@@ -8,12 +8,17 @@ import { heroConfigRoute } from "../lib/adminProcedures/heroConfig";
 import { featuresConfigRoute } from "../lib/adminProcedures/feturesConfig";
 import { categoriesRoute } from "../lib/adminProcedures/categories";
 import { productsRoute } from "../lib/adminProcedures/products";
+import { ordersRoute } from "../lib/procedures/orders"; // Add this import
 import { imagesRoute } from "../lib/procedures/cloudinary";
 import { cartRoute } from "../lib/procedures/cart";
 import { checkoutRoute } from "../lib/procedures/checkout";
 import { mcUsersRoute } from "../lib/procedures/mcUsers";
 import { supportRoute } from "../lib/adminProcedures/support";
-// header/footer merged into siteConfig
+import {
+  checkAndAssignAdminRole,
+  getUserRole,
+  getUserCount,
+} from "../lib/procedures/userManagement";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -35,13 +40,18 @@ export const appRouter = {
   featuresConfig: featuresConfigRoute,
   categories: categoriesRoute,
   products: productsRoute,
+  orders: ordersRoute, // Add this line
   images: imagesRoute,
   cart: cartRoute,
   checkout: checkoutRoute,
   mcUsers: mcUsersRoute,
   support: supportRoute,
+  checkAndAssignAdminRole,
+  getUserRole,
+  getUserCount,
   adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),
 };
+
 export type AppRouter = typeof appRouter;

@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import UserMenu from "./user-menu";
 import ModeToggle from "./mode-toggle";
 import {ShoppingBag} from "lucide-react";
 import {CartButton} from "./cart/cart-btn";

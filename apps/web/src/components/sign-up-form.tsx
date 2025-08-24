@@ -2,9 +2,11 @@
 
 import { authClient } from "@/lib/auth-client";
 import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import z from "zod";
 import Loader from "./loader";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -14,8 +16,7 @@ import { Separator } from "./ui/separator";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Mail, Lock, User } from "lucide-react";
-// Optional: if you have siteConfig/logo as in LandingPage
-// import { siteConfig } from "@/data/data";
+import { orpc } from "@/utils/orpc";
 
 export default function SignUpForm({
   onSwitchToSignIn,
@@ -25,6 +26,40 @@ export default function SignUpForm({
   const router = useRouter();
   const { isPending } = authClient.useSession();
 
+  // Check if this will be the first user (for UI display)
+  const [isFirstUser, setIsFirstUser] = useState(false);
+
+  // Check user count on component mount using oRPC
+  const { data: userCountData } = useQuery(orpc.getUserCount.queryOptions());
+
+  // Update isFirstUser when userCountData changes
+  useEffect(() => {
+    if (userCountData) {
+      setIsFirstUser(userCountData.count === 0);
+    }
+  }, [userCountData]);
+
+  // Mutation for assigning admin role
+  const adminRoleMutation = useMutation(
+    orpc.checkAndAssignAdminRole.mutationOptions({
+      onSuccess: (data) => {
+        if (data?.isAdmin) {
+          toast.success(
+            "Welcome! You've been automatically assigned admin privileges as the first user."
+          );
+        } else {
+          toast.success("Sign up successful");
+        }
+        router.push("/dashboard");
+      },
+      onError: (error) => {
+        console.error("Error assigning admin role:", error);
+        toast.success("Sign up successful");
+        router.push("/dashboard");
+      },
+    })
+  );
+
   const form = useForm({
     defaultValues: {
       email: "",
@@ -32,22 +67,41 @@ export default function SignUpForm({
       name: "",
     },
     onSubmit: async ({ value }) => {
-      await authClient.signUp.email(
-        {
-          email: value.email,
-          password: value.password,
-          name: value.name,
-        },
-        {
-          onSuccess: () => {
-            router.push("/dashboard");
-            toast.success("Sign up successful");
+      try {
+        const signUpResult = await authClient.signUp.email(
+          {
+            email: value.email,
+            password: value.password,
+            name: value.name,
           },
-          onError: (error) => {
-            toast.error(error.error.message || error.error.statusText);
-          },
+          {
+            onError: (error) => {
+              toast.error(error.error.message || error.error.statusText);
+            },
+          }
+        );
+
+        // If signup was successful, check and assign admin role
+        if (
+          signUpResult &&
+          typeof signUpResult === "object" &&
+          signUpResult.data &&
+          signUpResult.data.user
+        ) {
+          const user = signUpResult.data.user;
+
+          if (user?.id) {
+            adminRoleMutation.mutate({ userId: user.id });
+            return; // Don't redirect here, let the mutation handle it
+          }
         }
-      );
+
+        // If no admin role assignment needed, redirect immediately
+        router.push("/dashboard");
+        toast.success("Sign up successful");
+      } catch (error) {
+        console.error("Signup error:", error);
+      }
     },
     validators: {
       onSubmit: z.object({
@@ -97,6 +151,35 @@ export default function SignUpForm({
             <p className="mt-2 text-muted-foreground">
               Start your journey with us today
             </p>
+
+            {/* First user notification */}
+            {isFirstUser && (
+              <div className="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-2">
+                  <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-900/40 mt-0.5">
+                    <div className="size-2 rounded-full bg-blue-600" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                      🎉 You're the first user!
+                    </p>
+                    <p className="text-blue-700 dark:text-blue-300 mt-1">
+                      You'll automatically be assigned admin privileges and have
+                      full access to manage the platform.
+                    </p>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                      <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-1 font-medium">
+                        Total Users: 0
+                      </span>
+                      <span>→</span>
+                      <span className="inline-flex items-center rounded-full bg-blue-200 dark:bg-blue-800 px-2 py-1 font-medium">
+                        You'll be #1
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardHeader>
 
           <CardContent>
@@ -215,9 +298,15 @@ export default function SignUpForm({
                   <Button
                     type="submit"
                     className="w-full px-8 text-base shadow-sm transition-all duration-300 hover:shadow-md"
-                    disabled={!state.canSubmit || state.isSubmitting}
+                    disabled={
+                      !state.canSubmit ||
+                      state.isSubmitting ||
+                      adminRoleMutation.isPending
+                    }
                   >
-                    {state.isSubmitting ? "Creating..." : "Sign Up"}
+                    {state.isSubmitting || adminRoleMutation.isPending
+                      ? "Creating..."
+                      : "Sign Up"}
                     <ArrowRight className="ml-2 size-4" />
                   </Button>
                 )}

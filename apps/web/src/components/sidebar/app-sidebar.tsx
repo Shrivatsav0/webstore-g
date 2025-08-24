@@ -9,6 +9,7 @@ import {
   IconListDetails,
   IconSearch,
   IconSettings,
+  IconShoppingCart,
 } from "@tabler/icons-react";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
@@ -50,6 +51,11 @@ const data = {
       title: "Support",
       url: "/dashboard/support",
       icon: IconHelpCircle,
+    },
+    {
+      title: "Orders",
+      url: "/dashboard/orders",
+      icon: IconShoppingCart,
     },
   ],
 

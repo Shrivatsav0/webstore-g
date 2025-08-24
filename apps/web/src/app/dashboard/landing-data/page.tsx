@@ -18,7 +18,6 @@ import {
   Globe,
   LayoutDashboard,
   Star,
-  ShoppingBag,
   Mail,
   Footprints,
   Lightbulb,
@@ -40,15 +39,6 @@ import {
   Zap,
   Clock,
 } from "lucide-react";
-import {
-  siteConfig as initialSite,
-  heroData as initialHero,
-  features as initialFeatures,
-  categories as initialCategories,
-  newsletter as initialNewsletter,
-  categoryItems as allCategories,
-  type CategoryWithCTA,
-} from "../../../../../../data/data";
 import { SiteHeader } from "@/components/sidebar/site-header";
 import { CInput } from "@/components/ui/cinput";
 
@@ -140,15 +130,6 @@ const featureSchema = z.object({
     .max(200, "Description too long"),
 });
 
-const categorySchema = z.object({
-  title: z.string().min(1, "Category title required").max(50, "Title too long"),
-  description: z
-    .string()
-    .min(5, "Description too short")
-    .max(150, "Description too long"),
-  image: z.string().url("Invalid image URL"),
-});
-
 const newsletterSchema = z.object({
   title: z
     .string()
@@ -175,9 +156,12 @@ type ValidationError = {
 
 export default function LandingPageDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [features, setFeatures] = useState(initialFeatures);
-  const [categories, setCategories] = useState<CategoryWithCTA[]>([]);
-  const [newsletter, setNewsletter] = useState(initialNewsletter);
+  const [features, setFeatures] = useState([]);
+
+  const [newsletter, setNewsletter] = useState({
+    title: "",
+    description: "",
+  });
 
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -373,19 +357,12 @@ export default function LandingPageDashboard() {
       checkField(feature.description);
     });
 
-    // Categories (max 3 but at least 1)
-    categories.forEach((category) => {
-      checkField(category.title);
-      checkField(category.description);
-      checkField(category.image);
-    });
-
     // Newsletter
     checkField(newsletter.title);
     checkField(newsletter.description);
 
     return Math.round((completedFields / totalFields) * 100);
-  }, [siteConfig, heroConfigData, features, categories, newsletter]);
+  }, [siteConfig, heroConfigData, features, newsletter]);
 
   const validateAllData = (): ValidationError[] => {
     const validationErrors: ValidationError[] = [];
@@ -426,19 +403,6 @@ export default function LandingPageDashboard() {
       }
     });
 
-    categories.forEach((category, index) => {
-      const categoryResult = categorySchema.safeParse(category);
-      if (!categoryResult.success) {
-        categoryResult.error.issues.forEach((err) => {
-          validationErrors.push({
-            section: "Categories",
-            field: `Category ${index + 1} - ${err.path.join(".")}`,
-            message: err.message,
-          });
-        });
-      }
-    });
-
     const newsletterResult = newsletterSchema.safeParse(newsletter);
     if (!newsletterResult.success) {
       newsletterResult.error.issues.forEach((err) => {
@@ -473,7 +437,6 @@ export default function LandingPageDashboard() {
         siteConfig,
         heroConfigData,
         features,
-        categories,
         newsletter,
       });
 
@@ -731,7 +694,7 @@ export default function LandingPageDashboard() {
               </Card>
 
               {/* Analytics Overview */}
-              {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"> 
+              {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                   title="Total Visitors"
                   value={mockAnalytics.overview.totalVisitors.toLocaleString()}
@@ -878,12 +841,7 @@ export default function LandingPageDashboard() {
                       action={() => setActiveTab("hero")}
                       badge="High Impact"
                     />
-                    <QuickActionCard
-                      title="Manage Categories"
-                      description="Add or edit product categories"
-                      icon={ShoppingBag}
-                      action={() => setActiveTab("categories")}
-                    />
+
                     <QuickActionCard
                       title="Update Features"
                       description="Highlight your key features"
@@ -936,74 +894,6 @@ export default function LandingPageDashboard() {
                 featuresConfig={featuresConfig}
                 setFeaturesConfig={setFeaturesConfig}
               />
-            </TabsContent>
-
-            {/* CATEGORIES TAB */}
-            <TabsContent value="categories" className="space-y-6">
-              <Card className="shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <ShoppingBag className="size-6 text-primary" />
-                    </div>
-                    Categories
-                    <Badge variant="secondary" className="ml-auto">
-                      {categories.length} / 3 Selected
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    Select up to 3 categories for your landing page
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {allCategories.map((cat) => {
-                      const isSelected = categories.some(
-                        (c) => c.id === cat.id
-                      );
-                      const isDisabled = !isSelected && categories.length >= 3;
-
-                      return (
-                        <div
-                          key={cat.id}
-                          onClick={() => {
-                            if (isSelected) {
-                              setCategories(
-                                categories.filter((c) => c.id !== cat.id)
-                              );
-                            } else if (!isDisabled) {
-                              setCategories([...categories, cat]);
-                            }
-                          }}
-                          className={`cursor-pointer rounded-lg border p-4 flex flex-col items-center text-center transition-all ${
-                            isSelected
-                              ? "border-primary bg-primary/10"
-                              : "border-muted hover:border-primary/50"
-                          } ${
-                            isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                        >
-                          <img
-                            src={cat.image}
-                            alt={cat.title}
-                            className="w-full h-32 object-cover rounded-md mb-3"
-                          />
-                          <h4 className="font-medium">{cat.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {cat.description}
-                          </p>
-                          {isSelected && (
-                            <Badge className="mt-2" variant="default">
-                              Selected
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <SectionTip text="Choose the categories that best represent your offerings. You can select up to 3." />
-                </CardContent>
-              </Card>
             </TabsContent>
 
             {/* OTHER TAB */}
