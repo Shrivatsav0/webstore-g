@@ -19,6 +19,7 @@ import {
   getUserRole,
   getUserCount,
 } from "../lib/procedures/userManagement";
+import { adminRoute } from "../lib/procedures/admin";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -49,6 +50,7 @@ export const appRouter = {
   checkAndAssignAdminRole,
   getUserRole,
   getUserCount,
+  admin: adminRoute,
   adminUsers: adminProcedure.handler(async () => {
     return db.select().from(user);
   }),
