@@ -31,7 +31,7 @@ export const appRouter = {
       user: context.session?.user,
     };
   }),
-  publicProcedure: publicProcedure,
+  // publicProcedure: publicProcedure, // Remove this line - it's a builder, not a procedure
   users: publicProcedure.handler(async () => {
     return db.select().from(user);
   }),
