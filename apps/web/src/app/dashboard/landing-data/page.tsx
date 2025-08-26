@@ -157,12 +157,22 @@ export default function LandingPageDashboard() {
   } = useQuery(orpc.siteConfig.list.queryOptions());
 
   // Local state for editing
-  const [siteConfig, setSiteConfig] = useState({
+  const [siteConfig, setSiteConfig] = useState<{
+    name: string;
+    url: string;
+    description: string;
+    headerLogoText: string;
+    headerLogoImage?: string;
+    headerShowLogo: boolean;
+    footerDescription: string;
+    footerCopyright: string;
+    footerPoweredBy: string;
+  }>({
     name: "",
     url: "",
     description: "",
     headerLogoText: "",
-    headerLogoImage: "",
+    headerLogoImage: undefined,
     headerShowLogo: true,
     footerDescription: "",
     footerCopyright: "",
@@ -177,7 +187,7 @@ export default function LandingPageDashboard() {
         url: siteConfigData[0].url ?? "",
         description: siteConfigData[0].description ?? "",
         headerLogoText: siteConfigData[0].headerLogoText ?? "",
-        headerLogoImage: siteConfigData[0].headerLogoImage ?? "",
+        headerLogoImage: siteConfigData[0].headerLogoImage ?? undefined,
         headerShowLogo: siteConfigData[0].headerShowLogo ?? true,
         footerDescription: siteConfigData[0].footerDescription ?? "",
         footerCopyright: siteConfigData[0].footerCopyright ?? "",
@@ -865,7 +875,8 @@ export default function LandingPageDashboard() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    This section is reserved for additional site configuration options.
+                    This section is reserved for additional site configuration
+                    options.
                   </p>
                 </CardContent>
               </Card>
