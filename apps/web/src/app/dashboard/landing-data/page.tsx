@@ -400,7 +400,6 @@ export default function LandingPageDashboard() {
         siteConfig,
         heroConfigData,
         features,
-        newsletter,
       });
 
       setSaveStatus("success");
