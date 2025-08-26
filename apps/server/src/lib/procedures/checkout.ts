@@ -63,7 +63,6 @@ export const createCheckoutSession = os
             description: products.description,
             price: products.price,
             image: products.image,
-            stock: products.stock,
             commands: products.commands,
           },
         })

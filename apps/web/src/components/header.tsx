@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import ModeToggle from "./mode-toggle";
 import {ShoppingBag} from "lucide-react";
 import {CartButton} from "./cart/cart-btn";
@@ -16,6 +17,7 @@ export function Header() {
     );
 
     const logoText = siteConfigData?.[0]?.headerLogoText || "BlockShop";
+    const logoImage = siteConfigData?.[0]?.headerLogoImage;
     const showLogo = siteConfigData?.[0]?.headerShowLogo ?? true;
 
     return (
@@ -31,7 +33,21 @@ export function Header() {
                             </>
                         ) : (
                             <>
-                                {showLogo && <ShoppingBag className="size-8 text-foreground"/>}
+                                {showLogo && (
+                                    logoImage ? (
+                                        <div className="relative size-8">
+                                            <Image
+                                                src={logoImage}
+                                                alt="Logo"
+                                                fill
+                                                className="object-contain"
+                                                sizes="32px"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <ShoppingBag className="size-8 text-foreground"/>
+                                    )
+                                )}
                                 <span className="text-2xl font-bold text-foreground">
                   {logoText}
                 </span>

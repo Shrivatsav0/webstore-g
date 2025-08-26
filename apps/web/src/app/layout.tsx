@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Nunito_Sans } from "next/font/google";
 import "../index.css";
 import Providers from "@/components/providers";
 import { Header } from "@/components/header";
+import { generateSiteMetadata } from "@/lib/metadata";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,11 +21,9 @@ const nunito_sans = Nunito_Sans({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "BlockShop",
-  description:
-    "BlockShop is a platform for buying and selling products for minecraft. Buy Random Items, Sell Random Items, and more!",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return await generateSiteMetadata();
+}
 
 export default function RootLayout({
   children,

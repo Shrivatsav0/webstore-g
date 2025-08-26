@@ -41,7 +41,6 @@ export const getCart = os
             description: products.description,
             price: products.price,
             image: products.image,
-            stock: products.stock,
           },
         })
         .from(cartItems)
@@ -306,7 +305,6 @@ export const getCartForOrder = os
             description: products.description,
             price: products.price,
             image: products.image,
-            stock: products.stock,
           },
         })
         .from(cartItems)

@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Globe, Footprints } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
 
 export default function SiteConfigSection({
   siteConfig,
@@ -23,6 +24,7 @@ export default function SiteConfigSection({
     url: string;
     description: string;
     headerLogoText: string;
+    headerLogoImage?: string;
     headerShowLogo: boolean;
     footerDescription: string;
     footerCopyright: string;
@@ -34,6 +36,7 @@ export default function SiteConfigSection({
       url: string;
       description: string;
       headerLogoText: string;
+      headerLogoImage?: string;
       headerShowLogo: boolean;
       footerDescription: string;
       footerCopyright: string;
@@ -135,6 +138,18 @@ export default function SiteConfigSection({
                 </Label>
               </div>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Logo Image</Label>
+            <ImageUpload
+              value={siteConfig.headerLogoImage}
+              onChange={(url) => setSiteConfig({ ...siteConfig, headerLogoImage: url })}
+              onRemove={() => setSiteConfig({ ...siteConfig, headerLogoImage: undefined })}
+              folder="site-logos"
+            />
+            <p className="text-xs text-muted-foreground">
+              Upload a custom logo image. If not provided, the default icon will be used.
+            </p>
           </div>
         </div>
 

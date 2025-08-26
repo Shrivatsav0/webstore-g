@@ -66,8 +66,7 @@ export function ProductSection({
     compareAtPrice?: number;
     discountPercent?: number;
     rating: number;
-    inStock: boolean;
-    stockCount?: number;
+
     sku?: string;
     tags?: string[];
     isNew?: boolean;
@@ -76,10 +75,7 @@ export function ProductSection({
 }) {
   const router = useRouter();
   const [copied, setCopied] = React.useState(false);
-  const lowStock =
-    product.inStock && typeof product.stockCount === "number"
-      ? product.stockCount > 0 && product.stockCount <= 5
-      : false;
+
 
   const priceHasDiscount =
     typeof product.compareAtPrice === "number" &&
@@ -143,8 +139,8 @@ export function ProductSection({
               </Badge>
             ) : null}
           </div>
-          <Button size="sm" disabled={!product.inStock} onClick={() => {}}>
-            {product.inStock ? "Add to cart" : "Out of stock"}
+          <Button size="sm" onClick={() => {}}>
+            Add to cart
           </Button>
         </div>
       </div>
@@ -209,28 +205,7 @@ export function ProductSection({
               </div>
             </div>
 
-            {/* Availability with low-stock hint */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                Availability
-              </span>
-              <span
-                className={cn(
-                  "text-xs",
-                  product.inStock
-                    ? lowStock
-                      ? "text-amber-500"
-                      : "text-emerald-500"
-                    : "text-muted-foreground"
-                )}
-              >
-                {product.inStock
-                  ? lowStock
-                    ? `Low stock (${product.stockCount})`
-                    : "In stock"
-                  : "Out of stock"}
-              </span>
-            </div>
+
 
             {/* SKU + copy */}
             {product.sku ? (
@@ -309,7 +284,6 @@ export function ProductSection({
               </Link>
             </Button>
             <Button
-              disabled={!product.inStock}
               onClick={() => {
                 // add to cart
               }}

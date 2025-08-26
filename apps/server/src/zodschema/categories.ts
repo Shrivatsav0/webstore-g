@@ -26,7 +26,6 @@ export const productInput = z.object({
   price: z.number().min(0, "Price must be positive"),
   image: z.string().url("Invalid image URL").optional(),
   categoryId: z.number().min(1, "Category is required"),
-  stock: z.number().min(0, "Stock must be non-negative").default(0),
   isActive: z.boolean().default(true),
   commands: z
     .array(z.string().min(1, "Command cannot be empty"))

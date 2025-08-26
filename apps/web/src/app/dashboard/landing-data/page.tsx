@@ -18,7 +18,6 @@ import {
   Globe,
   LayoutDashboard,
   Star,
-  Mail,
   Footprints,
   Lightbulb,
   Save,
@@ -78,17 +77,10 @@ const mockAnalytics = {
       ctr: 20.1,
       topCategory: "Electronics",
     },
-    newsletter: {
-      views: 5678,
-      signups: 234,
-      conversionRate: 4.1,
-      growth: "+12.3%",
-    },
   },
   recentActivity: [
     { action: "Hero section updated", time: "2 hours ago", user: "Admin" },
     { action: "New category added", time: "1 day ago", user: "Editor" },
-    { action: "Newsletter content changed", time: "2 days ago", user: "Admin" },
     { action: "Site config updated", time: "3 days ago", user: "Admin" },
   ],
 };
@@ -130,17 +122,6 @@ const featureSchema = z.object({
     .max(200, "Description too long"),
 });
 
-const newsletterSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Newsletter title required")
-    .max(80, "Title too long"),
-  description: z
-    .string()
-    .min(10, "Description too short")
-    .max(200, "Description too long"),
-});
-
 const footerSchema = z.object({
   description: z
     .string()
@@ -157,11 +138,6 @@ type ValidationError = {
 export default function LandingPageDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [features, setFeatures] = useState([]);
-
-  const [newsletter, setNewsletter] = useState({
-    title: "",
-    description: "",
-  });
 
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -186,6 +162,7 @@ export default function LandingPageDashboard() {
     url: "",
     description: "",
     headerLogoText: "",
+    headerLogoImage: "",
     headerShowLogo: true,
     footerDescription: "",
     footerCopyright: "",
@@ -200,6 +177,7 @@ export default function LandingPageDashboard() {
         url: siteConfigData[0].url ?? "",
         description: siteConfigData[0].description ?? "",
         headerLogoText: siteConfigData[0].headerLogoText ?? "",
+        headerLogoImage: siteConfigData[0].headerLogoImage ?? "",
         headerShowLogo: siteConfigData[0].headerShowLogo ?? true,
         footerDescription: siteConfigData[0].footerDescription ?? "",
         footerCopyright: siteConfigData[0].footerCopyright ?? "",
@@ -357,12 +335,8 @@ export default function LandingPageDashboard() {
       checkField(feature.description);
     });
 
-    // Newsletter
-    checkField(newsletter.title);
-    checkField(newsletter.description);
-
     return Math.round((completedFields / totalFields) * 100);
-  }, [siteConfig, heroConfigData, features, newsletter]);
+  }, [siteConfig, heroConfigData, features]);
 
   const validateAllData = (): ValidationError[] => {
     const validationErrors: ValidationError[] = [];
@@ -402,17 +376,6 @@ export default function LandingPageDashboard() {
         });
       }
     });
-
-    const newsletterResult = newsletterSchema.safeParse(newsletter);
-    if (!newsletterResult.success) {
-      newsletterResult.error.issues.forEach((err) => {
-        validationErrors.push({
-          section: "Newsletter",
-          field: err.path.join("."),
-          message: err.message,
-        });
-      });
-    }
 
     return validationErrors;
   };
@@ -854,12 +817,7 @@ export default function LandingPageDashboard() {
                       icon={Settings}
                       action={() => setActiveTab("site")}
                     />
-                    <QuickActionCard
-                      title="Newsletter Setup"
-                      description="Configure email signup"
-                      icon={Mail}
-                      action={() => setActiveTab("other")}
-                    />
+
                     <QuickActionCard
                       title="Preview Site"
                       description="See how your site looks"
@@ -898,65 +856,18 @@ export default function LandingPageDashboard() {
 
             {/* OTHER TAB */}
             <TabsContent value="other" className="space-y-6">
-              {/* Newsletter Section */}
-              <Card className="border-2 hover:border-primary/20 transition-colors">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Mail className="size-6 text-primary" />
-                    </div>
-                    Newsletter
-                    <Badge variant="secondary" className="ml-auto">
-                      {mockAnalytics.sections.newsletter.conversionRate}%
-                      Conversion
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    Encourage visitors to subscribe to your newsletter
+              {/* Additional configurations can be added here in the future */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Additional Settings</CardTitle>
+                  <CardDescription>
+                    Future configuration options will appear here
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-3 mb-6">
-                    <StatCard
-                      title="Views"
-                      value={mockAnalytics.sections.newsletter.views.toLocaleString()}
-                      icon={Eye}
-                    />
-                    <StatCard
-                      title="Signups"
-                      value={mockAnalytics.sections.newsletter.signups.toLocaleString()}
-                      icon={Users}
-                    />
-                    <StatCard
-                      title="Growth"
-                      value={mockAnalytics.sections.newsletter.growth}
-                      icon={TrendingUp}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <CInput
-                      label="Newsletter Title"
-                      value={newsletter.title}
-                      onChange={(e) =>
-                        setNewsletter({ ...newsletter, title: e.target.value })
-                      }
-                      placeholder="Stay Updated"
-                    />
-                    <CInput
-                      label="Newsletter Description"
-                      value={newsletter.description}
-                      onChange={(e) =>
-                        setNewsletter({
-                          ...newsletter,
-                          description: e.target.value,
-                        })
-                      }
-                      textarea
-                      placeholder="Why should people subscribe?"
-                    />
-                  </div>
-                  <SectionTip text="Offer value in your newsletter signup. What will subscribers get that others won't?" />
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    This section is reserved for additional site configuration options.
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>

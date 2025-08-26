@@ -27,6 +27,7 @@
     "install": "^0.13.0",
     "lucide-react": "^0.536.0",
     "next-cloudinary": "^6.16.0",
+    "ts": "^0.2.2",
     "zustand": "^5.0.7"
   },
   "devDependencies": {

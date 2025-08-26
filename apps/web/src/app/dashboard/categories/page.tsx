@@ -83,7 +83,6 @@ type Product = {
   description: string;
   price: number;
   image?: string | null;
-  stock?: number | null;
   isActive: boolean | null;
   categoryId: number;
   commands?: string[] | null;

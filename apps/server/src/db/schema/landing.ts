@@ -14,6 +14,7 @@ export const siteConfig = pgTable("site_config", {
   description: text("description").notNull(),
   // Header fields (merged)
   headerLogoText: varchar("header_logo_text", { length: 50 }).notNull(),
+  headerLogoImage: varchar("header_logo_image", { length: 255 }),
   headerShowLogo: boolean("header_show_logo").default(true).notNull(),
   // Footer fields (merged)
   footerDescription: text("footer_description").notNull(),
@@ -46,14 +47,6 @@ export const categories = pgTable("categories", {
   title: varchar("title", { length: 50 }).notNull(),
   description: varchar("description", { length: 150 }).notNull(),
   image: varchar("image", { length: 255 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const newsletter = pgTable("newsletter", {
-  id: serial("id").primaryKey(),
-  title: varchar("title", { length: 80 }).notNull(),
-  description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

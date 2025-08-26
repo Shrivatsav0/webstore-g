@@ -7,6 +7,7 @@ export const siteConfigInput = z.object({
   description: z.string(),
   // merged header
   headerLogoText: z.string().max(50),
+  headerLogoImage: z.string().max(255).optional(),
   headerShowLogo: z.boolean().default(true),
   // merged footer
   footerDescription: z.string(),
@@ -40,13 +41,6 @@ export const categoriesInput = z.object({
   image: z.string().max(255),
 });
 export const categoriesUpdate = categoriesInput.extend({ id: z.number() });
-
-// newsletter
-export const newsletterInput = z.object({
-  title: z.string().max(80),
-  description: z.string(),
-});
-export const newsletterUpdate = newsletterInput.extend({ id: z.number() });
 
 // header
 export const headerInput = z.object({

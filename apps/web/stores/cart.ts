@@ -11,7 +11,6 @@ interface CartItem {
     description: string;
     price: number;
     image: string | null;
-    stock: number | null;
   };
 }
 

@@ -101,7 +101,7 @@ export default function ProductDetailPage() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-background text-foreground">
+        <main className="  bg-background text-foreground">
           <section className="container mx-auto px-4 py-10">
             <p className="text-muted-foreground">Loading product…</p>
           </section>
@@ -114,7 +114,7 @@ export default function ProductDetailPage() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-background text-foreground">
+        <main className="  bg-background text-foreground">
           <section className="container mx-auto px-4 py-10">
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="mb-8 rounded-lg border border-destructive/20 bg-destructive/5 p-8 backdrop-blur">
@@ -168,7 +168,7 @@ export default function ProductDetailPage() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-background text-foreground">
+        <main className="  bg-background text-foreground">
           <section className="container mx-auto px-4 py-10">
             <div className="flex items-center justify-center py-20">
               <Loader2 className="size-8 animate-spin" />
@@ -183,7 +183,7 @@ export default function ProductDetailPage() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-background text-foreground">
+        <main className="  bg-background text-foreground">
           <section className="container mx-auto px-4 py-10">
             <h1 className="mb-2 text-2xl font-semibold">Product not found</h1>
             <p className="text-muted-foreground">
@@ -209,7 +209,7 @@ export default function ProductDetailPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-background text-foreground">
+      <main className="  bg-background text-foreground">
         {/* Hero */}
         <section className="relative h-[300px] overflow-hidden md:h-[380px]">
           <Image
@@ -475,15 +475,7 @@ function RelatedProducts({
                     </Badge>
                   )}
                 </div>
-                {!product.stock || product.stock === 0 ? (
-                  <Badge className="bg-muted text-muted-foreground backdrop-blur">
-                    Out of stock
-                  </Badge>
-                ) : product.stock < 10 ? (
-                  <Badge className="bg-orange-500/80 text-white backdrop-blur">
-                    Low stock
-                  </Badge>
-                ) : null}
+
               </div>
 
               <div className="absolute inset-x-4 bottom-4 z-10">
@@ -500,13 +492,7 @@ function RelatedProducts({
                     {product.description}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {product.stock && (
-                        <span className="text-xs text-muted-foreground">
-                          {product.stock} in stock
-                        </span>
-                      )}
-                    </div>
+
                     <Button
                       size="sm"
                       variant="secondary"
