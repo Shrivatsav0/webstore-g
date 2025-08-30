@@ -148,6 +148,7 @@ export const deleteCategory = adminProcedure
   });
 
 export const categoriesRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   list: listCategories,
   get: getCategory,
   create: createCategory,

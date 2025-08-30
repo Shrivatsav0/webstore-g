@@ -117,6 +117,7 @@ export const validateMcUserForCheckout = os
   });
 
 export const mcUsersRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   get: getMcUser,
   setUsername: setMcUsername,
   validateForCheckout: validateMcUserForCheckout,

@@ -88,7 +88,7 @@ export function CartButton() {
             </SheetClose>
           </div>
 
-          <SheetDescription className="text-left">
+          <div className="text-left text-sm text-muted-foreground">
             {itemCount === 0 ? (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Package className="h-4 w-4" />
@@ -106,7 +106,7 @@ export function CartButton() {
                 </div>
               </div>
             )}
-          </SheetDescription>
+          </div>
         </SheetHeader>
 
         <div className="flex-1 overflow-hidden">

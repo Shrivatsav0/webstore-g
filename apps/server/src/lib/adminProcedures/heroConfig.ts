@@ -30,6 +30,7 @@ export const upsertHeroConfig = adminProcedure
   });
 
 export const heroConfigRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   list: listHeroConfig,
   upsert: upsertHeroConfig,
 };
