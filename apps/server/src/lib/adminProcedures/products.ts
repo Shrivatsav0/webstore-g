@@ -168,6 +168,7 @@ export const deleteProduct = adminProcedure
   });
 
 export const productsRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   list: listProducts,
   get: getProduct,
   create: createProduct,

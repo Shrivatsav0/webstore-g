@@ -391,6 +391,7 @@ export const getOrder = os
   });
 
 export const checkoutRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   create: createCheckoutSession,
   getOrder,
   getOrderBySession, // Add the new method

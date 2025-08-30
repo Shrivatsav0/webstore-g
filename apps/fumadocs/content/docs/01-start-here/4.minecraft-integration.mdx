@@ -3,7 +3,7 @@ title: Connect Minecraft Server
 description: Configure your Minecraft server plugin and server env so orders deliver commands
 ---
 
-This template delivers commands to your Minecraft server after successful payment.
+This template delivers commands to your Minecraft server after successful payment. The system automatically fetches Minecraft user IDs from Mojang API and uses them in commands instead of usernames for better reliability.
 
 ### 1) Generate a strong secret
 
@@ -43,18 +43,27 @@ From your machine:
 curl -X POST http://66.66.66.66:8133/deliver \
   -H "Authorization: Bearer your_generated_secret_here" \
   -H "Content-Type: application/json" \
-  -d '{"orderId":1,"minecraftUsername":"Steve","commands":["say Hello {user}"]}'
+  -d '{"orderId":1,"minecraftUsername":"Steve","commands":["lp user {user} parent set vip"]}'
 ```
 
 You should see a JSON response from the plugin.
 
-### 5) Production tips
+### 5) User ID Integration
+
+The system automatically fetches Minecraft user IDs (UUIDs) from Mojang's API when processing orders. This means:
+
+- Commands use `{user}` placeholder which gets replaced with the actual user ID
+- More reliable than usernames (usernames can change, IDs don't)
+- Works with plugins that require user IDs instead of usernames
+- Example: `lp user {user} parent set vip` becomes `lp user 069a79f4-44e9-4726-a5be-fca90e38aaf5 parent set vip`
+
+### 6) Production tips
 
 - Use a reverse proxy / firewall rules to limit access if desired.
 - Use a strong random secret.
 - Rotate the secret periodically and update both plugin and server env.
 
-### 6) Make yourself admin (manual)
+### 7) Make yourself admin (manual)
 
 To access admin-only procedures, set your user role to `admin` in the database:
 

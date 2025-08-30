@@ -83,6 +83,9 @@ export const deleteImage = adminProcedure
   });
 
 export const imagesRoute = {
+  health: os.handler(async () => {
+    return { status: cloudinary.config().cloud_name ? "ok" : "degraded" };
+  }),
   upload: uploadImage,
   delete: deleteImage,
 };

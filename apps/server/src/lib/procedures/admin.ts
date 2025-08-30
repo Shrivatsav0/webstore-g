@@ -203,6 +203,7 @@ export const toggleUserBan = publicProcedure
   });
 
 export const adminRoute = {
+  health: publicProcedure.handler(() => ({ status: "ok" })),
   getAllUsers,
   toggleAdminRole,
   toggleUserBan,

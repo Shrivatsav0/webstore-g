@@ -30,6 +30,7 @@ export const upsertSiteConfig = adminProcedure
   });
 // Export as router
 export const siteConfigRouter = {
+  health: os.handler(async () => ({ status: "ok" })),
   list: listSiteConfigs,
   upsert: upsertSiteConfig,
 };

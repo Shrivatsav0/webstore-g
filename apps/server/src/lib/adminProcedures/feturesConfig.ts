@@ -42,6 +42,7 @@ export const upsertFeaturesConfig = adminProcedure
   });
 
 export const featuresConfigRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   list: listFeturesConfig,
   upsert: upsertFeaturesConfig,
 };

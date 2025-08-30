@@ -142,6 +142,7 @@ export const upsertContactMethod = adminProcedure
   });
 
 export const supportRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   config: {
     list: listSupportConfig,
     upsert: upsertSupportConfig,

@@ -431,6 +431,7 @@ export const clearCartAfterOrder = os
   });
 
 export const cartRoute = {
+  health: os.handler(async () => ({ status: "ok" })),
   get: getCart,
   add: addToCart,
   update: updateCartItem,
