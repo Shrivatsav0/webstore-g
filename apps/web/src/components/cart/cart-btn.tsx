@@ -16,6 +16,7 @@ import {
 import { useCartStore } from "../../../stores/cart";
 import { CartItems } from "./cart-items";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export function CartButton() {
   const { itemCount, total } = useCartStore();
@@ -115,8 +116,24 @@ export function CartButton() {
 
         {itemCount > 0 && (
           <div className="border-t py-4 mt-4">
-            <div className="text-xs text-muted-foreground text-center">
+            <div className="flex flex-col text-xs text-muted-foreground text-center">
               Secure checkout powered by Lemonsqueezy
+              <span>
+                By proceeding you will be agreeing to our
+                <span>
+                  <Link href="/tos" className="text-blue-400">
+                    {" "}
+                    terms and condition{" "}
+                  </Link>
+                </span>
+                as well as our
+                <span>
+                  <Link href="/policy" className="text-blue-400">
+                    {" "}
+                    privacy policy{" "}
+                  </Link>
+                </span>
+              </span>
             </div>
           </div>
         )}
