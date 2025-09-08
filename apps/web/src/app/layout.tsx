@@ -21,9 +21,11 @@ const nunito_sans = Nunito_Sans({
   display: "swap",
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  return await generateSiteMetadata();
-}
+export const metadata: Metadata = {
+  title: "Gamestash webstore",
+  description:
+    "Gamestash webstore is a platform for buying and selling products for minecraft. Buy Random Items, Sell Random Items, and more!",
+};
 
 export default function RootLayout({
   children,
